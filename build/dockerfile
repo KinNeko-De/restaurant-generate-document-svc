@@ -1,0 +1,9 @@
+FROM texlive/texlive:latest AS base
+
+WORKDIR /app
+
+COPY /bin/app .
+
+RUN chmod +x /app/app
+
+CMD ["/app/app"]
