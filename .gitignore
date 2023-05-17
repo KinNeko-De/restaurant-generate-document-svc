@@ -21,6 +21,8 @@
 go.work
 
 # sut bin files
-scripts/sut/bin
+/scripts/sut/bin/**
 # sut log files
-scripts/sut/log
+/scripts/sut/log/**
+# sut run files
+/scripts/sut/run/**

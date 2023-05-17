@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path"
 
+	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
+
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	restaurantApi "github.com/kinneko-de/test-api-contract/golang/kinnekode/restaurant/document"
 	"google.golang.org/protobuf/proto"
@@ -130,7 +132,7 @@ func copyFile(src, dst string) (int64, error) {
 func ToLuaTable(m proto.Message) []byte {
 	opt := protolua.LuaMarshalOption{AdditionalMarshalers: []interface {
 		Handle(fullName protoreflect.FullName) (protolua.MarshalFunc, error)
-	}{}}
+	}{protoluaextension.KinnekoDeProtobuf{}}}
 	luaTable, err := opt.Marshal(m)
 	if err != nil {
 		log.Fatalf("Error converting protobuf message to luat table: %v", err)
