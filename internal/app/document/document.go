@@ -24,7 +24,8 @@ func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantA
 	runDirectory := path.Join(appRootDirectory, "run")
 
 	tmpDirectory := path.Join(runDirectory, request.RequestId.Value)
-	outputDirectory := path.Join(tmpDirectory, "generated")
+	outputDirectoryRelativeToTmpDirectory := "generated"
+	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 	documentGenerator.createDirectoryForRun(outputDirectory)
 
 	template, message := documentGenerator.GetTemplateName(request)
@@ -33,7 +34,8 @@ func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantA
 	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, template, tmpDirectory)
 	documentGenerator.CreateDocumentInputData(template, tmpDirectory, documentInputData)
 
-	documentGenerator.ExecuteLuaLatex(outputDirectory, templateFile, tmpDirectory)
+	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
+	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	log.Println("Document generated.") // TODO make this debug
 
 	documentGenerator.SecurePdfForLocalDebug(outputDirectory, path.Join(appRootDirectory, "output"))
