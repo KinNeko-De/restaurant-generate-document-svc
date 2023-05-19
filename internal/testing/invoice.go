@@ -1,4 +1,4 @@
-package main
+package testing
 
 import (
 	"log"
@@ -11,12 +11,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func main() {
-	document.DocumentGenerator{}.GenerateDocument(CreateTestRequest(), "../../scripts/sut")
+func GenerateTestInvoice(appRootDirectory string) {
+	document.DocumentGenerator{}.GenerateDocument(createTestRequest(), appRootDirectory)
 }
 
-func CreateTestRequest() *restaurantApi.GenerateDocumentV1 {
-	randomRequestId := CreateRandomUuid()
+func createTestRequest() *restaurantApi.GenerateDocumentV1 {
+	randomRequestId := createRandomUuid()
 
 	request := restaurantApi.GenerateDocumentV1{
 		RequestId: randomRequestId,
@@ -72,7 +72,7 @@ func CreateTestRequest() *restaurantApi.GenerateDocumentV1 {
 	return &request
 }
 
-func CreateRandomUuid() *protobuf.Uuid {
+func createRandomUuid() *protobuf.Uuid {
 	id, uuidErr := uuid.NewUUID()
 	if uuidErr != nil {
 		log.Fatalf("error generating google uuid: %v", uuidErr)

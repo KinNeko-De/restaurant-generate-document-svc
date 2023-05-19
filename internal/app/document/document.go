@@ -37,8 +37,6 @@ func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantA
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	log.Println("Document generated.") // TODO make this debug
-
-	documentGenerator.SecurePdfForLocalDebug(outputDirectory, path.Join(appRootDirectory, "output"))
 }
 
 func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {
@@ -46,13 +44,6 @@ func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory strin
 
 	if commandError != nil {
 		log.Fatalf("error executing %v %v", cmd, commandError)
-	}
-}
-
-func (documentGenerator DocumentGenerator) SecurePdfForLocalDebug(outputDirectory string, localDebugDirectory string) {
-	_, pdfErr := copyFile(path.Join(outputDirectory, "invoice.pdf"), path.Join(localDebugDirectory, "invoice.pdf"))
-	if pdfErr != nil {
-		log.Fatalf("error coping pdf file %v", pdfErr)
 	}
 }
 
