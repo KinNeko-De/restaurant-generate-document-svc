@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Server",
+            "name": "document-svc",
             "type": "go",
             "request": "launch",
             "mode": "debug",
@@ -13,11 +13,11 @@
             "showLog": true
         },
         {
-            "name": "Launch manual test",
+            "name": "document generate local",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/document-generate/main.go",
+            "program": "${workspaceFolder}/cmd/document-generate-local/main.go",
             "showLog": true
         }
     ]

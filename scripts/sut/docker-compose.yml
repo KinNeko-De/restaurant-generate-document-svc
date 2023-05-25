@@ -1,5 +1,5 @@
 version: '3.9'
-name: restaurant-document-generate-function
+name: restaurant-document-svc
 
 services:
   restaurant-document-svc:
@@ -10,7 +10,10 @@ services:
     build:
       dockerfile: ../../build/dockerfile
     volumes:
-      - ./log/:/app/log
+      - ./log/:/app/log/
+      - ./run/:/app/run/
+      - ./template/:/app/template/
+
 networks:
   dev-net:
     name: restaurant-dev-net

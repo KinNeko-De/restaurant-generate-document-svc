@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path"
 
+	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
+
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	restaurantApi "github.com/kinneko-de/test-api-contract/golang/kinnekode/restaurant/document"
 	"google.golang.org/protobuf/proto"
@@ -22,7 +24,8 @@ func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantA
 	runDirectory := path.Join(appRootDirectory, "run")
 
 	tmpDirectory := path.Join(runDirectory, request.RequestId.Value)
-	outputDirectory := path.Join(tmpDirectory, "generated")
+	outputDirectoryRelativeToTmpDirectory := "generated"
+	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 	documentGenerator.createDirectoryForRun(outputDirectory)
 
 	template, message := documentGenerator.GetTemplateName(request)
@@ -31,10 +34,9 @@ func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantA
 	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, template, tmpDirectory)
 	documentGenerator.CreateDocumentInputData(template, tmpDirectory, documentInputData)
 
-	documentGenerator.ExecuteLuaLatex(outputDirectory, templateFile, tmpDirectory)
+	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
+	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	log.Println("Document generated.") // TODO make this debug
-
-	documentGenerator.SecurePdfForLocalDebug(outputDirectory, path.Join(appRootDirectory, "output"))
 }
 
 func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {
@@ -42,13 +44,6 @@ func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory strin
 
 	if commandError != nil {
 		log.Fatalf("error executing %v %v", cmd, commandError)
-	}
-}
-
-func (documentGenerator DocumentGenerator) SecurePdfForLocalDebug(outputDirectory string, localDebugDirectory string) {
-	_, pdfErr := copyFile(path.Join(outputDirectory, "invoice.pdf"), path.Join(localDebugDirectory, "invoice.pdf"))
-	if pdfErr != nil {
-		log.Fatalf("error coping pdf file %v", pdfErr)
 	}
 }
 
@@ -130,7 +125,7 @@ func copyFile(src, dst string) (int64, error) {
 func ToLuaTable(m proto.Message) []byte {
 	opt := protolua.LuaMarshalOption{AdditionalMarshalers: []interface {
 		Handle(fullName protoreflect.FullName) (protolua.MarshalFunc, error)
-	}{}}
+	}{protoluaextension.KinnekoDeProtobuf{}}}
 	luaTable, err := opt.Marshal(m)
 	if err != nil {
 		log.Fatalf("Error converting protobuf message to luat table: %v", err)
