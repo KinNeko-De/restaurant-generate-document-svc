@@ -38,7 +38,7 @@ func createTestCommand() *restaurantdocumentApi.GenerateDocumentV1 {
 						},
 						Items: []*restaurantdocumentApi.InvoiceV1_Item{
 							{
-								Description: "Spitzenunterwäsche\\r\\nANS 23054303053",
+								Description: "Spitzenunterwäsche\r\nANS 23054303053",
 								Quantity:    2,
 								NetAmount:   &protobuf.Decimal{Value: "3.35"},
 								Taxation:    &protobuf.Decimal{Value: "19"},
@@ -46,7 +46,7 @@ func createTestCommand() *restaurantdocumentApi.GenerateDocumentV1 {
 								Sum:         &protobuf.Decimal{Value: "7.98"},
 							},
 							{
-								Description: "Schlabberhose (10% reduziert)\\r\\nANS 606406540",
+								Description: "Schlabberhose (10% reduziert)\r\nANS 606406540",
 								Quantity:    1,
 								NetAmount:   &protobuf.Decimal{Value: "9.07"},
 								Taxation:    &protobuf.Decimal{Value: "19"},
