@@ -4,6 +4,12 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5 h1:Hy51ABqJ3Mb1xMGqefGKa4UVd679is6mOlEfhFpXC6Y=
+github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5/go.mod h1:gn/wdjDXrpdTYeIRzi/GWPG/bAJ1z1jjgiov/wRT2fM=
+github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.1 h1:cMPlym4aS9Swl0OBWOh99aN4ysoCWmQya/9MPstquKk=
+github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.1/go.mod h1:CHmTC/cuR/YLZmu8/I4Q5iPolOddREQuDUCtJ4lF6Pw=
+github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.2 h1:2ZAP40XQsRtVrL4P8CXIoHLpM6FCyvNfixq1eAQcAWs=
+github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.2/go.mod h1:CHmTC/cuR/YLZmu8/I4Q5iPolOddREQuDUCtJ4lF6Pw=
 github.com/kinneko-de/protobuf-go v0.1.0 h1:nNzdaxq7koyqFhIdVEp1H7jp/1bOm91f2v5OreIX7aA=
 github.com/kinneko-de/protobuf-go v0.1.0/go.mod h1:JHcoxh4O1ZdkDql+GG43oyy8Pa9Wyn910Ov588x62YY=
 github.com/kinneko-de/test-api-contract/golang/kinnekode/protobuf v0.2.1-document-request.46 h1:bfNfj2pJAl4tEb5hy1OkkX8twtEHiuMWurm5QpfgNAQ=
@@ -16,4 +22,6 @@ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8T
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
 google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
+google.golang.org/protobuf v1.31.0 h1:g0LDEJHgrBl9N9r17Ru3sqWhkIx2NB67okBHPwC7hs8=
+google.golang.org/protobuf v1.31.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

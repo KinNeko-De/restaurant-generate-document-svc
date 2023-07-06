@@ -9,8 +9,8 @@ import (
 
 	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
 
+	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
-	restaurantApi "github.com/kinneko-de/test-api-contract/golang/kinnekode/restaurant/document"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -18,17 +18,17 @@ import (
 type DocumentGenerator struct {
 }
 
-func (documentGenerator DocumentGenerator) GenerateDocument(request *restaurantApi.GenerateDocumentV1, appRootDirectory string) {
+func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocumentV1, appRootDirectory string) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 
 	runDirectory := path.Join(appRootDirectory, "run")
 
-	tmpDirectory := path.Join(runDirectory, request.RequestId.Value)
+	tmpDirectory := path.Join(runDirectory, command.Request.RequestId.Value)
 	outputDirectoryRelativeToTmpDirectory := "generated"
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 	documentGenerator.createDirectoryForRun(outputDirectory)
 
-	template, message := documentGenerator.GetTemplateName(request)
+	template, message := documentGenerator.GetTemplateName(command)
 	documentInputData := ToLuaTable(message)
 
 	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, template, tmpDirectory)
@@ -55,15 +55,15 @@ func (documentGenerator DocumentGenerator) runCommand(outputDirectory string, te
 	return cmd, commandError
 }
 
-func (documentGenerator DocumentGenerator) GetTemplateName(request *restaurantApi.GenerateDocumentV1) (string, proto.Message) {
+func (documentGenerator DocumentGenerator) GetTemplateName(command *restaurantApi.GenerateDocumentV1) (string, proto.Message) {
 	var template string
 	var message proto.Message
-	switch request.RequestedDocuments[0].Type.(type) {
+	switch command.RequestedDocuments[0].Type.(type) {
 	case *restaurantApi.GenerateDocumentV1_Document_Invoice:
 		template = "invoice"
-		message = request.RequestedDocuments[0].GetInvoice()
+		message = command.RequestedDocuments[0].GetInvoice()
 	default:
-		log.Fatalf("Document %v not supported yet", request.RequestedDocuments[0].Type)
+		log.Fatalf("Document %v not supported yet", command.RequestedDocuments[0].Type)
 	}
 	return template, message
 }

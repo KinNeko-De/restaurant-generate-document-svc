@@ -6,34 +6,37 @@ import (
 
 	"github.com/KinNeko-De/restaurant-document-svc/internal/app/document"
 	"github.com/google/uuid"
-	"github.com/kinneko-de/test-api-contract/golang/kinnekode/protobuf"
-	restaurantApi "github.com/kinneko-de/test-api-contract/golang/kinnekode/restaurant/document"
+	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
+	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant"
+	restaurantdocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func GenerateTestInvoice(appRootDirectory string) {
-	document.DocumentGenerator{}.GenerateDocument(createTestRequest(), appRootDirectory)
+	document.DocumentGenerator{}.GenerateDocument(createTestCommand(), appRootDirectory)
 }
 
-func createTestRequest() *restaurantApi.GenerateDocumentV1 {
+func createTestCommand() *restaurantdocumentApi.GenerateDocumentV1 {
 	randomRequestId := createRandomUuid()
 
-	request := restaurantApi.GenerateDocumentV1{
-		RequestId: randomRequestId,
-		RequestedDocuments: []*restaurantApi.GenerateDocumentV1_Document{
+	request := restaurantdocumentApi.GenerateDocumentV1{
+		Request: &restaurantApi.RequestV1{
+			RequestId: randomRequestId,
+		},
+		RequestedDocuments: []*restaurantdocumentApi.GenerateDocumentV1_Document{
 			{
-				Type: &restaurantApi.GenerateDocumentV1_Document_Invoice{
-					Invoice: &restaurantApi.GenerateDocumentV1_Document_InvoiceV1{
+				Type: &restaurantdocumentApi.GenerateDocumentV1_Document_Invoice{
+					Invoice: &restaurantdocumentApi.InvoiceV1{
 						DeliveredOn:  timestamppb.New(time.Date(2020, time.April, 13, 0, 0, 0, 0, time.UTC)),
 						CurrencyCode: "EUR",
-						Recipient: &restaurantApi.GenerateDocumentV1_Document_InvoiceV1_Recipient{
+						Recipient: &restaurantdocumentApi.InvoiceV1_Recipient{
 							Name:     "Max Mustermann",
 							Street:   "Musterstraße 17",
 							City:     "Musterstadt",
 							PostCode: "12345",
 							Country:  "DE",
 						},
-						Items: []*restaurantApi.GenerateDocumentV1_Document_InvoiceV1_Item{
+						Items: []*restaurantdocumentApi.InvoiceV1_Item{
 							{
 								Description: "Spitzenunterwäsche\\r\\nANS 23054303053",
 								Quantity:    2,
@@ -61,8 +64,8 @@ func createTestRequest() *restaurantApi.GenerateDocumentV1 {
 						},
 					},
 				},
-				OutputFormats: []restaurantApi.GenerateDocumentV1_Document_OutputFormat{
-					restaurantApi.GenerateDocumentV1_Document_OUTPUT_FORMAT_PDF,
+				OutputFormats: []restaurantdocumentApi.GenerateDocumentV1_Document_OutputFormat{
+					restaurantdocumentApi.GenerateDocumentV1_Document_OUTPUT_FORMAT_PDF,
 				},
 			},
 			{},
