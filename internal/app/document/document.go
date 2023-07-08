@@ -1,6 +1,7 @@
 package document
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"os"
@@ -19,14 +20,13 @@ import (
 type DocumentGenerator struct {
 }
 
-func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) {
+func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (reader *bufio.Reader) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
-
 	runDirectory := path.Join(appRootDirectory, "run")
-
 	tmpDirectory := path.Join(runDirectory, command.Request.RequestId.Value)
 	outputDirectoryRelativeToTmpDirectory := "generated"
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
+
 	documentGenerator.createDirectoryForRun(outputDirectory)
 
 	rootObject, message := documentGenerator.GetTemplateName(command)
@@ -38,6 +38,15 @@ func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantA
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	log.Println("Document generated.") // TODO make this debug
+
+	generatedDocument := path.Join(outputDirectory, rootObject+".pdf")
+	generatedDocumentFile, err := os.Open(generatedDocument)
+	if err != nil {
+		log.Fatalf("error open generated document %v", generatedDocument)
+	}
+
+	reader = bufio.NewReader(generatedDocumentFile)
+	return reader
 }
 
 func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {

@@ -1,7 +1,11 @@
 package testing
 
 import (
+	"bufio"
+	"io"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/KinNeko-De/restaurant-document-svc/internal/app/document"
@@ -13,7 +17,35 @@ import (
 )
 
 func GenerateTestInvoice(appRootDirectory string) {
-	document.DocumentGenerator{}.GenerateDocument(createTestCommand(), appRootDirectory)
+	f, ferr := os.Create("output.pdf")
+	if ferr != nil {
+		log.Fatalf("Error %v", ferr)
+	}
+	defer f.Close()
+	testWriter := bufio.NewWriter(f)
+
+	const chunkSize = 1000
+	chunks := make([]byte, 0, chunkSize)
+	reader := document.DocumentGenerator{}.GenerateDocument(createTestCommand(), appRootDirectory)
+	totalReadBytes := 0
+	for {
+		numberOfReadBytes, err := reader.Read(chunks[:cap(chunks)])
+		if numberOfReadBytes > 0 {
+			chunks = chunks[:numberOfReadBytes]
+			totalReadBytes += len(chunks)
+			testWriter.Write(chunks)
+		}
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error %v", err)
+		}
+	}
+
+	testWriter.Flush()
+	log.Println(strconv.Itoa(totalReadBytes) + "Bytes read")
 }
 
 func createTestCommand() *restaurantDocumentApi.GenerateDocument {
