@@ -91,14 +91,14 @@ func (documentGenerator DocumentGenerator) CreateDocumentInputData(template stri
 	file.Close()
 }
 
-func (_ DocumentGenerator) createDirectoryForRun(outputDirectory string) {
+func (DocumentGenerator) createDirectoryForRun(outputDirectory string) {
 	mkDirError := os.MkdirAll(outputDirectory, os.ModeExclusive)
 	if mkDirError != nil {
 		log.Fatalf("Can not create output directory: %v", mkDirError)
 	}
 }
 
-func (_ DocumentGenerator) getCurrentDirectory() string {
+func (DocumentGenerator) getCurrentDirectory() string {
 	currentDirectory, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("error get current directory: %v", err)
