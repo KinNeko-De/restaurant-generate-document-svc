@@ -6,10 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
 
-	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document"
+	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -18,7 +19,7 @@ import (
 type DocumentGenerator struct {
 }
 
-func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocumentV1, appRootDirectory string) {
+func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 
 	runDirectory := path.Join(appRootDirectory, "run")
@@ -55,17 +56,17 @@ func (documentGenerator DocumentGenerator) runCommand(outputDirectory string, te
 	return cmd, commandError
 }
 
-func (documentGenerator DocumentGenerator) GetTemplateName(command *restaurantApi.GenerateDocumentV1) (string, proto.Message) {
-	var template string
+func (documentGenerator DocumentGenerator) GetTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Message) {
+	var rootObject string
 	var message proto.Message
 	switch command.RequestedDocuments[0].Type.(type) {
-	case *restaurantApi.GenerateDocumentV1_Document_Invoice:
-		template = "invoice"
+	case *restaurantApi.GenerateDocument_Document_Invoice:
+		rootObject = "Invoice"
 		message = command.RequestedDocuments[0].GetInvoice()
 	default:
 		log.Fatalf("Document %v not supported yet", command.RequestedDocuments[0].Type)
 	}
-	return template, message
+	return rootObject, message
 }
 
 func (documentGenerator DocumentGenerator) CopyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) string {
@@ -78,15 +79,14 @@ func (documentGenerator DocumentGenerator) CopyLuatexTemplate(documentDirectory 
 }
 
 func (documentGenerator DocumentGenerator) CreateDocumentInputData(template string, tmpDirectory string, inputData []byte) {
-	inputDataFile := template + ".lua"
+	inputDataFile := "data.lua"
 	file, err := os.Create(path.Join(tmpDirectory, inputDataFile))
 	if err != nil {
 		log.Fatalf("Error creating input data: %v", err)
 	}
 	file.WriteString("local ")
 	file.Write(inputData)
-	// TODO Make name of InvoiceV1 flexible
-	tableAssign := "return {" + template + " = InvoiceV1 }"
+	tableAssign := "return {" + strings.ToLower(template) + " = " + template + " }"
 	file.WriteString(tableAssign)
 	file.Close()
 }
