@@ -29,10 +29,10 @@ func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantA
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 	documentGenerator.createDirectoryForRun(outputDirectory)
 
-	template, message := documentGenerator.GetTemplateName(command)
+	rootObject, message := documentGenerator.GetTemplateName(command)
 	documentInputData := ToLuaTable(message)
 
-	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, template, tmpDirectory)
+	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
 	documentGenerator.CreateDocumentInputData(template, tmpDirectory, documentInputData)
 
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
@@ -78,7 +78,7 @@ func (documentGenerator DocumentGenerator) CopyLuatexTemplate(documentDirectory 
 	return templateFile
 }
 
-func (documentGenerator DocumentGenerator) CreateDocumentInputData(template string, tmpDirectory string, inputData []byte) {
+func (documentGenerator DocumentGenerator) CreateDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) {
 	inputDataFile := "data.lua"
 	file, err := os.Create(path.Join(tmpDirectory, inputDataFile))
 	if err != nil {
@@ -86,7 +86,8 @@ func (documentGenerator DocumentGenerator) CreateDocumentInputData(template stri
 	}
 	file.WriteString("local ")
 	file.Write(inputData)
-	tableAssign := "return {" + strings.ToLower(template) + " = " + template + " }"
+	// TODO change protobuf-go to user lower names
+	tableAssign := "return {" + strings.ToLower(rootObject) + " = " + rootObject + " }"
 	file.WriteString(tableAssign)
 	file.Close()
 }
