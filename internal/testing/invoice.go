@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -17,7 +18,10 @@ import (
 )
 
 func GenerateTestInvoice(appRootDirectory string) {
-	f, ferr := os.Create("output.pdf")
+	testCommand := createTestCommand()
+	outputDirectory := path.Join(appRootDirectory, "output")
+	document.CreateDirectoryForRun(outputDirectory)
+	f, ferr := os.Create(path.Join(outputDirectory, testCommand.Request.GetRequestId().Value+".pdf"))
 	if ferr != nil {
 		log.Fatalf("Error %v", ferr)
 	}
@@ -26,10 +30,11 @@ func GenerateTestInvoice(appRootDirectory string) {
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	reader := document.DocumentGenerator{}.GenerateDocument(createTestCommand(), appRootDirectory)
+	result := document.GenerateDocument(testCommand, appRootDirectory)
+	defer result.Close()
 	totalReadBytes := 0
 	for {
-		numberOfReadBytes, err := reader.Read(chunks[:cap(chunks)])
+		numberOfReadBytes, err := result.Reader.Read(chunks[:cap(chunks)])
 		if numberOfReadBytes > 0 {
 			chunks = chunks[:numberOfReadBytes]
 			totalReadBytes += len(chunks)

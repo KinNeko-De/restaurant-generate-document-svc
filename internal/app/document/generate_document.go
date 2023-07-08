@@ -17,26 +17,23 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-type DocumentGenerator struct {
-}
-
-func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (reader *bufio.Reader) {
+func GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (result GenerationResult) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
 	tmpDirectory := path.Join(runDirectory, command.Request.RequestId.Value)
 	outputDirectoryRelativeToTmpDirectory := "generated"
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 
-	documentGenerator.createDirectoryForRun(outputDirectory)
+	CreateDirectoryForRun(outputDirectory)
 
-	rootObject, message := documentGenerator.GetTemplateName(command)
-	documentInputData := ToLuaTable(message)
+	rootObject, message := getTemplateName(command)
+	documentInputData := convertToLuaTable(message)
 
-	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
-	documentGenerator.CreateDocumentInputData(rootObject, tmpDirectory, documentInputData)
+	templateFile := copyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
+	createDocumentInputData(rootObject, tmpDirectory, documentInputData)
 
-	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
-	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
+	executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
+	executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	log.Println("Document generated.") // TODO make this debug
 
 	generatedDocument := path.Join(outputDirectory, rootObject+".pdf")
@@ -45,19 +42,23 @@ func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantA
 		log.Fatalf("error open generated document %v", generatedDocument)
 	}
 
-	reader = bufio.NewReader(generatedDocumentFile)
-	return reader
+	reader := bufio.NewReader(generatedDocumentFile)
+	return GenerationResult{
+		generatedFile: generatedDocumentFile,
+		tmpDirectory:  tmpDirectory,
+		Reader:        reader,
+	}
 }
 
-func (documentGenerator DocumentGenerator) ExecuteLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {
-	cmd, commandError := documentGenerator.runCommand(outputDirectory, templateFile, tmpDirectory)
+func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {
+	cmd, commandError := runCommand(outputDirectory, templateFile, tmpDirectory)
 
 	if commandError != nil {
 		log.Fatalf("error executing %v %v", cmd, commandError)
 	}
 }
 
-func (documentGenerator DocumentGenerator) runCommand(outputDirectory string, templateFile string, tmpDirectory string) (*exec.Cmd, error) {
+func runCommand(outputDirectory string, templateFile string, tmpDirectory string) (*exec.Cmd, error) {
 	outputParameter := "-output-directory=" + outputDirectory
 	cmd := exec.Command("lualatex", outputParameter, templateFile)
 	cmd.Dir = tmpDirectory
@@ -65,7 +66,7 @@ func (documentGenerator DocumentGenerator) runCommand(outputDirectory string, te
 	return cmd, commandError
 }
 
-func (documentGenerator DocumentGenerator) GetTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Message) {
+func getTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Message) {
 	var rootObject string
 	var message proto.Message
 	switch command.RequestedDocuments[0].Type.(type) {
@@ -78,7 +79,7 @@ func (documentGenerator DocumentGenerator) GetTemplateName(command *restaurantAp
 	return rootObject, message
 }
 
-func (documentGenerator DocumentGenerator) CopyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) string {
+func copyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) string {
 	templateFile := template + ".tex"
 	_, texErr := copyFile(path.Join(documentDirectory, templateFile), path.Join(tmpDirectory, templateFile))
 	if texErr != nil {
@@ -87,7 +88,7 @@ func (documentGenerator DocumentGenerator) CopyLuatexTemplate(documentDirectory 
 	return templateFile
 }
 
-func (documentGenerator DocumentGenerator) CreateDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) {
+func createDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) {
 	inputDataFile := "data.lua"
 	file, err := os.Create(path.Join(tmpDirectory, inputDataFile))
 	if err != nil {
@@ -101,14 +102,14 @@ func (documentGenerator DocumentGenerator) CreateDocumentInputData(rootObject st
 	file.Close()
 }
 
-func (DocumentGenerator) createDirectoryForRun(outputDirectory string) {
+func CreateDirectoryForRun(outputDirectory string) {
 	mkDirError := os.MkdirAll(outputDirectory, os.ModeExclusive)
 	if mkDirError != nil {
 		log.Fatalf("Can not create output directory: %v", mkDirError)
 	}
 }
 
-func (DocumentGenerator) getCurrentDirectory() string {
+func getCurrentDirectory() string {
 	currentDirectory, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("error get current directory: %v", err)
@@ -132,7 +133,7 @@ func copyFile(src, dst string) (int64, error) {
 	return nBytes, copyError
 }
 
-func ToLuaTable(m proto.Message) []byte {
+func convertToLuaTable(m proto.Message) []byte {
 	opt := protolua.LuaMarshalOption{AdditionalMarshalers: []interface {
 		Handle(fullName protoreflect.FullName) (protolua.MarshalFunc, error)
 	}{protoluaextension.KinnekoDeProtobuf{}}}
@@ -141,4 +142,18 @@ func ToLuaTable(m proto.Message) []byte {
 		log.Fatalf("Error converting protobuf message to luat table: %v", err)
 	}
 	return luaTable
+}
+
+type GenerationResult struct {
+	generatedFile *os.File
+	tmpDirectory  string
+	Reader        *bufio.Reader
+}
+
+func (generationResult GenerationResult) Close() {
+	generationResult.generatedFile.Close()
+	err := os.RemoveAll(generationResult.tmpDirectory)
+	if err != nil {
+		log.Fatalf("Deleting tmp directory failed: %v", err)
+	}
 }

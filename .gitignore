@@ -26,3 +26,5 @@ scripts/sut/bin/**
 scripts/sut/log/**
 # sut log files
 scripts/sut/run/**
+# sut output files
+scripts/sut/output/**
