@@ -33,7 +33,7 @@ func (documentGenerator DocumentGenerator) GenerateDocument(command *restaurantA
 	documentInputData := ToLuaTable(message)
 
 	templateFile := documentGenerator.CopyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
-	documentGenerator.CreateDocumentInputData(template, tmpDirectory, documentInputData)
+	documentGenerator.CreateDocumentInputData(rootObject, tmpDirectory, documentInputData)
 
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
 	documentGenerator.ExecuteLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
