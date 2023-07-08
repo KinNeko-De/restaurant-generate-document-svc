@@ -2,6 +2,7 @@ package document
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -17,7 +18,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (result GenerationResult) {
+func GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (result GenerationResult, err error) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
 	tmpDirectory := path.Join(runDirectory, command.Request.RequestId.Value)
@@ -27,35 +28,58 @@ func GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory 
 	CreateDirectoryForRun(outputDirectory)
 
 	rootObject, message := getTemplateName(command)
-	documentInputData := convertToLuaTable(message)
-
-	templateFile := copyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
-	createDocumentInputData(rootObject, tmpDirectory, documentInputData)
-
-	executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
-	executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory)
-	log.Println("Document generated.") // TODO make this debug
-
-	generatedDocument := path.Join(outputDirectory, rootObject+".pdf")
-	generatedDocumentFile, err := os.Open(generatedDocument)
+	documentInputData, err := convertToLuaTable(message)
 	if err != nil {
-		log.Fatalf("error open generated document %v", generatedDocument)
+		return result, err
 	}
 
-	reader := bufio.NewReader(generatedDocumentFile)
+	templateFile, err := copyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
+	if err != nil {
+		return result, err
+	}
+
+	if err := createDocumentInputData(rootObject, tmpDirectory, documentInputData); err != nil {
+		return result, err
+	}
+
+	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
+		return result, err
+	}
+	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
+		return result, err
+	}
+
+	log.Println("Document generated.") // TODO make this debug
+
+	generatedDocumentFile, reader, err := createAccessToOutputfile(outputDirectory, rootObject)
+	if err != nil {
+		return result, err
+	}
+
 	return GenerationResult{
 		generatedFile: generatedDocumentFile,
 		tmpDirectory:  tmpDirectory,
 		Reader:        reader,
-	}
+	}, nil
 }
 
-func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) {
-	cmd, commandError := runCommand(outputDirectory, templateFile, tmpDirectory)
-
-	if commandError != nil {
-		log.Fatalf("error executing %v %v", cmd, commandError)
+func createAccessToOutputfile(outputDirectory string, rootObject string) (*os.File, *bufio.Reader, error) {
+	generatedDocument := path.Join(outputDirectory, rootObject+".pdf")
+	generatedDocumentFile, err := os.Open(generatedDocument)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error open generated document %v: %v", generatedDocument, err)
 	}
+	reader := bufio.NewReader(generatedDocumentFile)
+	return generatedDocumentFile, reader, nil
+}
+
+func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) error {
+	cmd, commandError := runCommand(outputDirectory, templateFile, tmpDirectory)
+	if commandError != nil {
+		return fmt.Errorf("error executing %v %v", cmd, commandError)
+	}
+
+	return nil
 }
 
 func runCommand(outputDirectory string, templateFile string, tmpDirectory string) (*exec.Cmd, error) {
@@ -79,69 +103,62 @@ func getTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Mes
 	return rootObject, message
 }
 
-func copyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) string {
+func copyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) (string, error) {
 	templateFile := template + ".tex"
 	_, texErr := copyFile(path.Join(documentDirectory, templateFile), path.Join(tmpDirectory, templateFile))
 	if texErr != nil {
-		log.Fatalf("Can not copy tex file: %v", texErr)
+		return "", fmt.Errorf("can not copy tex file: %v", texErr)
 	}
-	return templateFile
+	return templateFile, nil
 }
 
-func createDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) {
+func createDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) error {
 	inputDataFile := "data.lua"
 	file, err := os.Create(path.Join(tmpDirectory, inputDataFile))
 	if err != nil {
-		log.Fatalf("Error creating input data: %v", err)
+		return fmt.Errorf("error creating input data to directory %v: %v", tmpDirectory, err)
 	}
 	file.WriteString("local ")
 	file.Write(inputData)
 	// TODO change protobuf-go to user lower names
 	tableAssign := "return {" + strings.ToLower(rootObject) + " = " + rootObject + " }"
 	file.WriteString(tableAssign)
-	file.Close()
+	if err := file.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func CreateDirectoryForRun(outputDirectory string) {
+func CreateDirectoryForRun(outputDirectory string) error {
 	mkDirError := os.MkdirAll(outputDirectory, os.ModeExclusive)
-	if mkDirError != nil {
-		log.Fatalf("Can not create output directory: %v", mkDirError)
-	}
-}
-
-func getCurrentDirectory() string {
-	currentDirectory, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("error get current directory: %v", err)
-	}
-	return currentDirectory
+	return mkDirError
 }
 
 func copyFile(src, dst string) (int64, error) {
-	source, openError := os.Open(src)
-	if openError != nil {
-		return 0, openError
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
 	}
 	defer source.Close()
 
-	destination, createError := os.Create(dst)
-	if createError != nil {
-		return 0, createError
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
 	}
 	defer destination.Close()
-	nBytes, copyError := io.Copy(destination, source)
-	return nBytes, copyError
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
-func convertToLuaTable(m proto.Message) []byte {
+func convertToLuaTable(m proto.Message) ([]byte, error) {
 	opt := protolua.LuaMarshalOption{AdditionalMarshalers: []interface {
 		Handle(fullName protoreflect.FullName) (protolua.MarshalFunc, error)
 	}{protoluaextension.KinnekoDeProtobuf{}}}
 	luaTable, err := opt.Marshal(m)
 	if err != nil {
-		log.Fatalf("Error converting protobuf message to luat table: %v", err)
+		err = fmt.Errorf("Error converting protobuf message '%v' to luatable: %v", m, err)
 	}
-	return luaTable
+	return luaTable, err
 }
 
 type GenerationResult struct {
@@ -150,10 +167,8 @@ type GenerationResult struct {
 	Reader        *bufio.Reader
 }
 
-func (generationResult GenerationResult) Close() {
+func (generationResult GenerationResult) Close() error {
 	generationResult.generatedFile.Close()
 	err := os.RemoveAll(generationResult.tmpDirectory)
-	if err != nil {
-		log.Fatalf("Deleting tmp directory failed: %v", err)
-	}
+	return err
 }

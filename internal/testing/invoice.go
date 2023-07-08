@@ -19,19 +19,22 @@ import (
 
 func GenerateTestInvoice(appRootDirectory string) {
 	testCommand := createTestCommand()
+
 	outputDirectory := path.Join(appRootDirectory, "output")
 	document.CreateDirectoryForRun(outputDirectory)
-	f, ferr := os.Create(path.Join(outputDirectory, testCommand.Request.GetRequestId().Value+".pdf"))
-	if ferr != nil {
-		log.Fatalf("Error %v", ferr)
+	f, err := os.Create(path.Join(outputDirectory, testCommand.Request.GetRequestId().Value+".pdf"))
+	if err != nil {
+		log.Fatal(err)
 	}
 	defer f.Close()
 	testWriter := bufio.NewWriter(f)
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	result := document.GenerateDocument(testCommand, appRootDirectory)
-	defer result.Close()
+	result, err := document.GenerateDocument(testCommand, appRootDirectory)
+	if err != nil {
+		log.Fatal(err)
+	}
 	totalReadBytes := 0
 	for {
 		numberOfReadBytes, err := result.Reader.Read(chunks[:cap(chunks)])
@@ -45,12 +48,16 @@ func GenerateTestInvoice(appRootDirectory string) {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error %v", err)
+			log.Fatal(err)
 		}
 	}
 
 	testWriter.Flush()
 	log.Println(strconv.Itoa(totalReadBytes) + "Bytes read")
+
+	if err := result.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func createTestCommand() *restaurantDocumentApi.GenerateDocument {
