@@ -13,6 +13,7 @@ services:
       - ./log/:/app/log/
       - ./run/:/app/run/
       - ./template/:/app/template/
+      - ./output/:/app/output/
 
 networks:
   dev-net:
