@@ -20,9 +20,13 @@ import (
 func GenerateTestInvoice(appRootDirectory string) {
 	testCommand := createTestCommand()
 
+	requestId, err := protobuf.ToUuid(testCommand.Request.GetRequestId())
+	if err != nil {
+		log.Fatal(err)
+	}
 	outputDirectory := path.Join(appRootDirectory, "output")
 	document.CreateDirectoryForRun(outputDirectory)
-	f, err := os.Create(path.Join(outputDirectory, testCommand.Request.GetRequestId().Value+".pdf"))
+	f, err := os.Create(path.Join(outputDirectory, requestId.String()+".pdf"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +35,7 @@ func GenerateTestInvoice(appRootDirectory string) {
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	result, err := document.GenerateDocument(testCommand, appRootDirectory)
+	result, err := document.GenerateDocument(requestId, testCommand.RequestedDocuments[0], appRootDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}

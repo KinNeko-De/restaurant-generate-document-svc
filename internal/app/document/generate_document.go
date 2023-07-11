@@ -11,17 +11,18 @@ import (
 	"strings"
 
 	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
+	"github.com/google/uuid"
 
-	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func GenerateDocument(command *restaurantApi.GenerateDocument, appRootDirectory string) (result GenerationResult, err error) {
+func GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument, appRootDirectory string) (result GenerationResult, err error) {
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
-	tmpDirectory := path.Join(runDirectory, command.Request.RequestId.Value)
+	tmpDirectory := path.Join(runDirectory, requestId.String())
 	outputDirectoryRelativeToTmpDirectory := "generated"
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
 
@@ -90,15 +91,15 @@ func runCommand(outputDirectory string, templateFile string, tmpDirectory string
 	return cmd, commandError
 }
 
-func getTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Message) {
+func getTemplateName(command *restaurantDocumentApi.RequestedDocument) (string, proto.Message) {
 	var rootObject string
 	var message proto.Message
-	switch command.RequestedDocuments[0].Type.(type) {
-	case *restaurantApi.RequestedDocument_Invoice:
+	switch command.Type.(type) {
+	case *restaurantDocumentApi.RequestedDocument_Invoice:
 		rootObject = "Invoice"
-		message = command.RequestedDocuments[0].GetInvoice()
+		message = command.GetInvoice()
 	default:
-		log.Fatalf("Document %v not supported yet", command.RequestedDocuments[0].Type)
+		log.Fatalf("Document %v not supported yet", command.Type)
 	}
 	return rootObject, message
 }
