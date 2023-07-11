@@ -67,9 +67,9 @@ func createTestCommand() *restaurantDocumentApi.GenerateDocument {
 		Request: &restaurantApi.Request{
 			RequestId: randomRequestId,
 		},
-		RequestedDocuments: []*restaurantDocumentApi.GenerateDocument_Document{
+		RequestedDocuments: []*restaurantDocumentApi.RequestedDocument{
 			{
-				Type: &restaurantDocumentApi.GenerateDocument_Document_Invoice{
+				Type: &restaurantDocumentApi.RequestedDocument_Invoice{
 					Invoice: &restaurantDocumentApi.Invoice{
 						DeliveredOn:  timestamppb.New(time.Date(2020, time.April, 13, 0, 0, 0, 0, time.UTC)),
 						CurrencyCode: "EUR",
@@ -108,8 +108,8 @@ func createTestCommand() *restaurantDocumentApi.GenerateDocument {
 						},
 					},
 				},
-				OutputFormats: []restaurantDocumentApi.GenerateDocument_Document_OutputFormat{
-					restaurantDocumentApi.GenerateDocument_Document_OUTPUT_FORMAT_PDF,
+				OutputFormats: []restaurantDocumentApi.RequestedDocument_OutputFormat{
+					restaurantDocumentApi.RequestedDocument_OUTPUT_FORMAT_PDF,
 				},
 			},
 			{},
