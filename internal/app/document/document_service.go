@@ -30,7 +30,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		File: &documentServiceApi.GeneratePreviewResponse_Metadata{
 			Metadata: &documentServiceApi.GeneratedFileMetadata{
 				CreatedAt: timestamppb.Now(),
-				Size:      0,
+				Size:      uint64(result.Size),
 				MediaType: "application/pdf",
 				Extension: ".pdf",
 			},

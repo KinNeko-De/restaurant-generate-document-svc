@@ -57,10 +57,16 @@ func GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.Reques
 		return result, err
 	}
 
+	fileInfo, err := generatedDocumentFile.Stat()
+	if err != nil {
+		return result, err
+	}
+
 	return GenerationResult{
 		generatedFile: generatedDocumentFile,
 		tmpDirectory:  tmpDirectory,
 		Reader:        reader,
+		Size:          fileInfo.Size(),
 	}, nil
 }
 
@@ -157,7 +163,7 @@ func convertToLuaTable(m proto.Message) ([]byte, error) {
 	}{protoluaextension.KinnekoDeProtobuf{}}}
 	luaTable, err := opt.Marshal(m)
 	if err != nil {
-		err = fmt.Errorf("Error converting protobuf message '%v' to luatable: %v", m, err)
+		err = fmt.Errorf("error converting protobuf message '%v' to luatable: %v", m, err)
 	}
 	return luaTable, err
 }
@@ -166,6 +172,7 @@ type GenerationResult struct {
 	generatedFile *os.File
 	tmpDirectory  string
 	Reader        *bufio.Reader
+	Size          int64
 }
 
 func (generationResult GenerationResult) Close() error {
