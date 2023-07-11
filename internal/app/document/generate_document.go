@@ -94,7 +94,7 @@ func getTemplateName(command *restaurantApi.GenerateDocument) (string, proto.Mes
 	var rootObject string
 	var message proto.Message
 	switch command.RequestedDocuments[0].Type.(type) {
-	case *restaurantApi.GenerateDocument_Document_Invoice:
+	case *restaurantApi.RequestedDocument_Invoice:
 		rootObject = "Invoice"
 		message = command.RequestedDocuments[0].GetInvoice()
 	default:
