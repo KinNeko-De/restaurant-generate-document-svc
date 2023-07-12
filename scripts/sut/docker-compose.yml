@@ -1,14 +1,16 @@
 version: '3.9'
-name: restaurant-document-svc
+name: restaurant-generate-document-svc
 
 services:
-  restaurant-document-svc:
-    image: restaurant-document-svc
+  restaurant-generate-document-svc:
+    image: restaurant-generate-document-svc
     networks:
       - dev-net
-    container_name: restaurant-document-svc
+    container_name: restaurant-generate-document-svc
     build:
       dockerfile: ../../build/dockerfile
+    ports:
+      - "3110:3110"
     volumes:
       - ./log/:/app/log/
       - ./run/:/app/run/

@@ -5,10 +5,10 @@ call sut-build.cmd
 
 docker compose -f sut/docker-compose.yml build
 
-docker run -v %cd%\sut\log/:/app/log/ -v %cd%\sut\run/:/app/run/n-v %cd%\sut\template/:/app/template/ -t -i --name restaurant-document-svc restaurant-document-svc bash
+docker run -v %cd%\sut\log/:/app/log/ -v %cd%\sut\run/:/app/run/ -v %cd%\sut\template/:/app/template/ -t -i --name restaurant-generate-document-svc restaurant-generate-document-svc bash
 
-docker rm restaurant-document-svc
+docker rm restaurant-generate-document-svc
 
-docker image rm restaurant-document-svc
+docker image rm restaurant-generate-document-svc
 
 pause

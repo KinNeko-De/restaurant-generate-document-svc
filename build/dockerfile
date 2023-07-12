@@ -1,5 +1,7 @@
 FROM texlive/texlive:latest AS base
 
+EXPOSE 3110
+
 WORKDIR /app
 
 COPY /bin/app .
