@@ -10,8 +10,8 @@ import (
 	"path"
 	"strings"
 
-	protoluaextension "github.com/KinNeko-De/restaurant-document-svc/internal/app/encoding/protolua"
 	"github.com/google/uuid"
+	protoluaextension "github.com/kinneko-de/restaurant-document-svc/internal/app/encoding/protolua"
 
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
