@@ -4,16 +4,16 @@ import (
 	"log"
 	"net/http"
 
-	root "github.com/kinneko-de/restaurant-generate-document-svc"
+	"github.com/kinneko-de/restaurant-generate-document-svc/build"
 
-	"github.com/KinNeko-De/restaurant-generate-document-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app/operation"
 )
 
 func main() {
 	logfile := operation.UseLogFileInGenerated()
 	defer operation.CloseLogFile(logfile)
 
-	log.Println("Version " + root.Version)
+	log.Println("Version " + build.Version)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
