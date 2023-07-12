@@ -59,6 +59,10 @@ jobs:
           echo 'SEMANTIC_VERSION: ' $SEMANTIC_VERSION
           echo "semantic_version=$SEMANTIC_VERSION" >> $GITHUB_OUTPUT
           echo "major_minor_patch=$MAJOR_MINOR_PATCH" >> $GITHUB_OUTPUT
+      - name: Write version txt
+        id: version_txt
+        run: |
+          ${{ steps.semantic_version.outputs.semantic_version }} > build/version.txt
       - name: "Build"
         run: |
           go build ./...
@@ -67,3 +71,13 @@ jobs:
           go test ./... -race -coverprofile=coverage.out
       - name: "Code coverage"
         uses: codecov/codecov-action@v3
+      - name: Create semantic versioning git tag for golang
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/v${{ steps.semantic_version.outputs.semantic_version }}",
+              sha: context.sha
+            })
