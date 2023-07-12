@@ -62,7 +62,7 @@ jobs:
       - name: Write version txt
         id: version_txt
         run: |
-          ${{ steps.semantic_version.outputs.semantic_version }} > build/version.txt
+          tee build/version.txt <<< ${{ steps.semantic_version.outputs.semantic_version }}
       - name: "Build"
         run: |
           go build ./...
