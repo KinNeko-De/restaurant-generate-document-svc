@@ -5,9 +5,9 @@ import (
 	"net"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-svc/internal/app/document"
-	"github.com/kinneko-de/restaurant-document-svc/internal/app/operation"
 	"github.com/kinneko-de/restaurant-generate-document-svc/build"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app/document"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app/operation"
 	"google.golang.org/grpc"
 )
 

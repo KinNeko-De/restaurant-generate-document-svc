@@ -13,7 +13,7 @@ import (
 	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/v1"
-	"github.com/kinneko-de/restaurant-document-svc/internal/app/document"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app/document"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
