@@ -13,11 +13,13 @@ import (
 	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/v1"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app"
 	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app/document"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func GenerateTestInvoice(appRootDirectory string) {
+func GenerateTestInvoice() {
+	appRootDirectory := app.Config.RootPath
 	testCommand := createTestCommand()
 
 	requestId, err := protobuf.ToUuid(testCommand.Request.GetRequestId())
@@ -35,7 +37,7 @@ func GenerateTestInvoice(appRootDirectory string) {
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	result, err := document.GenerateDocument(requestId, testCommand.RequestedDocuments[0], appRootDirectory)
+	result, err := document.GenerateDocument(requestId, testCommand.RequestedDocuments[0])
 	if err != nil {
 		log.Fatal(err)
 	}

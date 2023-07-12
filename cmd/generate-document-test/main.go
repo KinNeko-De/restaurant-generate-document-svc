@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	testing.GenerateTestInvoice(".")
+	testing.GenerateTestInvoice()
 }

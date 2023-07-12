@@ -21,7 +21,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		return err
 	}
 
-	result, err := GenerateDocument(requestId, request.RequestedDocument, "../../scripts/sut")
+	result, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
 		return status.Error(codes.Internal, "generation of document failed.")
 	}

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app"
 	protoluaextension "github.com/kinneko-de/restaurant-generate-document-svc/internal/app/encoding/protolua"
 
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
@@ -19,7 +20,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument, appRootDirectory string) (result GenerationResult, err error) {
+func GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GenerationResult, err error) {
+	appRootDirectory := app.Config.RootPath
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
 	tmpDirectory := path.Join(runDirectory, requestId.String())
