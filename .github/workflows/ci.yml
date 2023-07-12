@@ -2,7 +2,7 @@ on:
   push:
     paths-ignore:
       - '**/**.md'
-      - 'doc/**'
+      - 'documentation/**'
 
 env:
   MAJOR_MINOR_PATCH: 0.1.0
