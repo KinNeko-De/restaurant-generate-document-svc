@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const chunkSize = 43008 // 42 * 1024
+
 type DocumentServiceServer struct {
 	documentServiceApi.UnimplementedDocumentServiceServer
 }
@@ -39,7 +41,6 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		return err
 	}
 
-	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
 	for {
 		numberOfReadBytes, err := result.Reader.Read(chunks[:cap(chunks)])
@@ -54,10 +55,10 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			}
 		}
 
-		if err == io.EOF {
-			break
-		}
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return status.Error(codes.Internal, "generation of document failed.")
 		}
 	}
