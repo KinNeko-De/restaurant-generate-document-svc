@@ -22,6 +22,9 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	if err != nil {
 		return err
 	}
+	if request.RequestedDocument == nil {
+		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
+	}
 
 	result, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
