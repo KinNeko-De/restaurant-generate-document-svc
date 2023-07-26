@@ -7,14 +7,10 @@ import (
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/build"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/document"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	logfile := operation.UseLogFileInGenerated()
-	defer operation.CloseLogFile(logfile)
-
 	log.Println("Version " + build.Version)
 
 	StartGrpcServer()

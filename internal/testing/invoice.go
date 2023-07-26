@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
-	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	apiProtobuf "github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
+	apiRestaurantDocument "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	restaurantApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/document"
@@ -22,7 +22,7 @@ func GenerateTestInvoice() {
 	appRootDirectory := app.Config.RootPath
 	testCommand := createTestCommand()
 
-	requestId, err := protobuf.ToUuid(testCommand.Request.GetRequestId())
+	requestId, err := apiProtobuf.ToUuid(testCommand.Request.GetRequestId())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,71 +66,70 @@ func GenerateTestInvoice() {
 	}
 }
 
-func createTestCommand() *restaurantDocumentApi.GenerateDocument {
+func createTestCommand() *apiRestaurantDocument.GenerateDocument {
 	randomRequestId := createRandomUuid()
 
-	request := restaurantDocumentApi.GenerateDocument{
+	request := apiRestaurantDocument.GenerateDocument{
 		Request: &restaurantApi.Request{
 			RequestId: randomRequestId,
 		},
-		RequestedDocuments: []*restaurantDocumentApi.RequestedDocument{
+		RequestedDocuments: []*apiRestaurantDocument.RequestedDocument{
 			{
-				Type: &restaurantDocumentApi.RequestedDocument_Invoice{
-					Invoice: &restaurantDocumentApi.Invoice{
+				Type: &apiRestaurantDocument.RequestedDocument_Invoice{
+					Invoice: &apiRestaurantDocument.Invoice{
 						DeliveredOn:  timestamppb.New(time.Date(2020, time.April, 13, 0, 0, 0, 0, time.UTC)),
 						CurrencyCode: "EUR",
-						Recipient: &restaurantDocumentApi.Invoice_Recipient{
+						Recipient: &apiRestaurantDocument.Invoice_Recipient{
 							Name:     "Max Mustermann",
 							Street:   "Musterstraße 17",
 							City:     "Musterstadt",
 							PostCode: "12345",
 							Country:  "DE",
 						},
-						Items: []*restaurantDocumentApi.Invoice_Item{
+						Items: []*apiRestaurantDocument.Invoice_Item{
 							{
 								Description: "Spitzenunterwäsche\r\nANS 23054303053",
 								Quantity:    2,
-								NetAmount:   &protobuf.Decimal{Value: "3.35"},
-								Taxation:    &protobuf.Decimal{Value: "19"},
-								TotalAmount: &protobuf.Decimal{Value: "3.99"},
-								Sum:         &protobuf.Decimal{Value: "7.98"},
+								NetAmount:   &apiProtobuf.Decimal{Value: "3.35"},
+								Taxation:    &apiProtobuf.Decimal{Value: "19"},
+								TotalAmount: &apiProtobuf.Decimal{Value: "3.99"},
+								Sum:         &apiProtobuf.Decimal{Value: "7.98"},
 							},
 							{
 								Description: "Schlabberhose (10% reduziert)\r\nANS 606406540",
 								Quantity:    1,
-								NetAmount:   &protobuf.Decimal{Value: "9.07"},
-								Taxation:    &protobuf.Decimal{Value: "19"},
-								TotalAmount: &protobuf.Decimal{Value: "10.79"},
-								Sum:         &protobuf.Decimal{Value: "10.79"},
+								NetAmount:   &apiProtobuf.Decimal{Value: "9.07"},
+								Taxation:    &apiProtobuf.Decimal{Value: "19"},
+								TotalAmount: &apiProtobuf.Decimal{Value: "10.79"},
+								Sum:         &apiProtobuf.Decimal{Value: "10.79"},
 							},
 							{
 								Description: "Versandkosten",
 								Quantity:    1,
-								NetAmount:   &protobuf.Decimal{Value: "0.00"},
-								Taxation:    &protobuf.Decimal{Value: "0"},
-								TotalAmount: &protobuf.Decimal{Value: "0.00"},
-								Sum:         &protobuf.Decimal{Value: "0.00"},
+								NetAmount:   &apiProtobuf.Decimal{Value: "0.00"},
+								Taxation:    &apiProtobuf.Decimal{Value: "0"},
+								TotalAmount: &apiProtobuf.Decimal{Value: "0.00"},
+								Sum:         &apiProtobuf.Decimal{Value: "0.00"},
 							},
 						},
 					},
 				},
-				OutputFormats: []restaurantDocumentApi.RequestedDocument_OutputFormat{
-					restaurantDocumentApi.RequestedDocument_OUTPUT_FORMAT_PDF,
+				OutputFormats: []apiRestaurantDocument.RequestedDocument_OutputFormat{
+					apiRestaurantDocument.RequestedDocument_OUTPUT_FORMAT_PDF,
 				},
 			},
-			{},
 		},
 	}
 
 	return &request
 }
 
-func createRandomUuid() *protobuf.Uuid {
+func createRandomUuid() *apiProtobuf.Uuid {
 	id, uuidErr := uuid.NewUUID()
 	if uuidErr != nil {
 		log.Fatalf("error generating google uuid: %v", uuidErr)
 	}
-	randomRequestId, protobufErr := protobuf.ToProtobuf(id)
+	randomRequestId, protobufErr := apiProtobuf.ToProtobuf(id)
 	if protobufErr != nil {
 		log.Fatalf("error generating protobuf uuid: %v", protobufErr)
 	}
