@@ -28,3 +28,6 @@ scripts/sut/log/**
 scripts/sut/run/**
 # sut output files
 scripts/sut/output/**
+
+# build file written by local sut
+build/version.txt
