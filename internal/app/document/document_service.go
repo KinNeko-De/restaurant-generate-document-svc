@@ -2,6 +2,7 @@ package document
 
 import (
 	"io"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
@@ -28,6 +29,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	result, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
+		log.Println(err) // TODO make this debug
 		return status.Error(codes.Internal, "generation of document failed.")
 	}
 
