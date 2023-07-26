@@ -5,22 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "generate-document-svc",
+            "name": "document-generate-svc",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/generate-document-svc/main.go",
+            "program": "${workspaceFolder}/cmd/document-generate-svc/main.go",
             "showLog": true,
             "env": {
               "APP_ROOT_PATH" : "../../scripts/sut"
             }
         },
         {
-            "name": "generate test document",
+            "name": "document-generate-test",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/generate-document-test/main.go",
+            "program": "${workspaceFolder}/cmd/document-generate-test/main.go",
             "showLog": true,
             "env": {
               "APP_ROOT_PATH" : "../../scripts/sut"

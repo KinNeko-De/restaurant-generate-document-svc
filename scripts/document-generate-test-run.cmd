@@ -1,7 +1,7 @@
 :: starts the system under test
 docker network create restaurant
 
-call sut-build.cmd
+call document-generate-test-build.cmd
 
 docker compose -f sut/docker-compose.yml up --build --remove-orphans --exit-code-from restaurant-document-generate-svc
 

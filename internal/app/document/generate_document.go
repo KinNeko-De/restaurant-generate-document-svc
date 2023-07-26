@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kinneko-de/restaurant-generate-document-svc/internal/app"
-	protoluaextension "github.com/kinneko-de/restaurant-generate-document-svc/internal/app/encoding/protolua"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
+	protoluaextension "github.com/kinneko-de/restaurant-document-generate-svc/internal/app/encoding/protolua"
 
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"

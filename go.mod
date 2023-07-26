@@ -1,4 +1,4 @@
-module github.com/kinneko-de/restaurant-generate-document-svc
+module github.com/kinneko-de/restaurant-document-generate-svc
 
 go 1.20
 
