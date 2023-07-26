@@ -10,7 +10,7 @@ services:
     build:
       dockerfile: ../../build/dockerfile
     ports:
-      - "3110:3110"
+      - "42984:3110"
     volumes:
       - ./log/:/app/log/
       - ./run/:/app/run/
