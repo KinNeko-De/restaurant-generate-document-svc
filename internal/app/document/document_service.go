@@ -3,6 +3,7 @@ package document
 import (
 	"io"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
@@ -19,6 +20,7 @@ type DocumentServiceServer struct {
 }
 
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
+	start := time.Now()
 	requestId, err := ParseRequestId(request)
 	if err != nil {
 		return err
@@ -26,12 +28,16 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	if request.RequestedDocument == nil {
 		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
 	}
+	log.Println("Preprocessing: " + time.Since(start).String())
+	start = time.Now()
 
 	result, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
 		log.Println(err) // TODO make this debug
 		return status.Error(codes.Internal, "generation of document failed.")
 	}
+	log.Println("Generation: " + time.Since(start).String())
+	start = time.Now()
 
 	if err := stream.Send(&documentServiceApi.GeneratePreviewResponse{
 		File: &documentServiceApi.GeneratePreviewResponse_Metadata{
@@ -67,6 +73,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			return status.Error(codes.Internal, "generation of document failed.")
 		}
 	}
+
+	log.Println("Sneding: " + time.Since(start).String())
 
 	return nil
 }
