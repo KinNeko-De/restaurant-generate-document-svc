@@ -1,7 +1,7 @@
 :: attach to the system under test, only works if you define a CMD instead of an ENTRYPOINT
 docker network create restaurant
 
-call sut-build.cmd
+call document-generate-svc-build.cmd
 
 docker compose -f sut/docker-compose.yml build
 

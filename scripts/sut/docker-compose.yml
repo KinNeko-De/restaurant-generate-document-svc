@@ -3,7 +3,7 @@ name: restaurant-document-generate-svc
 
 services:
   restaurant-document-generate-svc:
-    image: restaurant-document-generate--svc
+    image: restaurant-document-generate-svc
     networks:
       - project-network
     container_name: restaurant-document-generate-svc
