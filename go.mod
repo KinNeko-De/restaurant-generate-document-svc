@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5
 	github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5
 	google.golang.org/grpc v1.56.2
 )

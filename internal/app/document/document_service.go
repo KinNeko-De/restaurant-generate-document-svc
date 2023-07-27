@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"google.golang.org/grpc/codes"
@@ -25,9 +26,11 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	if err != nil {
 		return err
 	}
-	if request.RequestedDocument == nil {
-		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
-	}
+	/*
+		if request.RequestedDocument == nil {
+			return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
+		}
+	*/
 	log.Println("Preprocessing: " + time.Since(start).String())
 	start = time.Now()
 

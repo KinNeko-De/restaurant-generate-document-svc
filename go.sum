@@ -6,12 +6,15 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5 h1:3IZOAnD058zZllQTZNBioTlrzrBG/IjpiZ133IEtusM=
+github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5/go.mod h1:xbKERva94Pw2cPen0s79J3uXmGzbbpDYFBFDlZ4mV/w=
 github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5 h1:Hy51ABqJ3Mb1xMGqefGKa4UVd679is6mOlEfhFpXC6Y=
 github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5/go.mod h1:gn/wdjDXrpdTYeIRzi/GWPG/bAJ1z1jjgiov/wRT2fM=
 github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.8 h1:hsdgwev7bW7xOVzXxlBXmmuZ8Pwnc+wr2QpSq1s7OWI=
 github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.2.5-document-request.8/go.mod h1:WXdsl5EXmaZ7Duoe0cDTSxtQVy+8ubg2iCL2LtkKyE4=
 github.com/kinneko-de/protobuf-go v0.1.0 h1:nNzdaxq7koyqFhIdVEp1H7jp/1bOm91f2v5OreIX7aA=
 github.com/kinneko-de/protobuf-go v0.1.0/go.mod h1:JHcoxh4O1ZdkDql+GG43oyy8Pa9Wyn910Ov588x62YY=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 golang.org/x/net v0.12.0 h1:cfawfvKITfUsFCeJIHJrbSxpeu/E81khclypR0GVT50=
