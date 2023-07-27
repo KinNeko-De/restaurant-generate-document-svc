@@ -9,7 +9,7 @@ env:
 
 concurrency: ci-${{ github.ref }}
 
-name: restaurant-generate-document-svc-ci
+name: restaurant-document-generate-svc-ci
 
 jobs:
   ci:
