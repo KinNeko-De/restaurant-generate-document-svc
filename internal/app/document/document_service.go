@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/kinneko-de/api-contract/golang/kinnekode/protobuf"
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,10 +21,7 @@ type DocumentServiceServer struct {
 
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
 	start := time.Now()
-	requestId, err := ParseRequestId(request)
-	if err != nil {
-		return err
-	}
+	requestId := uuid.New()
 
 	if request.RequestedDocument == nil {
 		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
@@ -82,6 +78,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	return nil
 }
 
+/*
 func ParseRequestId(request *documentServiceApi.GeneratePreviewRequest) (uuid uuid.UUID, grpcError error) {
 	if request.RequestId == nil {
 		return uuid, status.Error(codes.InvalidArgument, "requestId is mandatory to generate a document.")
@@ -92,3 +89,4 @@ func ParseRequestId(request *documentServiceApi.GeneratePreviewRequest) (uuid uu
 	}
 	return requestId, nil
 }
+*/
