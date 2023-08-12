@@ -83,20 +83,14 @@ func createAccessToOutputfile(outputDirectory string, rootObject string) (*os.Fi
 }
 
 func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) error {
-	cmd, commandError := runCommand(outputDirectory, templateFile, tmpDirectory)
-	if commandError != nil {
-		return fmt.Errorf("error executing %v %v", cmd, commandError)
-	}
-
-	return nil
-}
-
-func runCommand(outputDirectory string, templateFile string, tmpDirectory string) (*exec.Cmd, error) {
 	outputParameter := "-output-directory=" + outputDirectory
 	cmd := exec.Command("lualatex", outputParameter, templateFile)
 	cmd.Dir = tmpDirectory
 	commandError := cmd.Run()
-	return cmd, commandError
+	if commandError != nil {
+		return fmt.Errorf("error executing %v %v", cmd, commandError)
+	}
+	return nil
 }
 
 func getTemplateName(command *restaurantDocumentApi.RequestedDocument) (string, proto.Message) {
