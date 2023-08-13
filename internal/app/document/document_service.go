@@ -75,6 +75,10 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	log.Println("Sneding: " + time.Since(start).String())
 
+	if err := result.Close(); err != nil {
+		log.Print(err) // TODO Make this an error but do not abort
+	}
+
 	return nil
 }
 

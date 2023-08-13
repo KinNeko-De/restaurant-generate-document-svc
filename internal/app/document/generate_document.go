@@ -29,7 +29,10 @@ type GenerationResult struct {
 }
 
 func (generationResult GenerationResult) Close() error {
-	generationResult.generatedFile.Close()
+	closeErr := generationResult.generatedFile.Close()
+	if closeErr != nil {
+		return closeErr
+	}
 	err := os.RemoveAll(generationResult.tmpDirectory)
 	return err
 }
