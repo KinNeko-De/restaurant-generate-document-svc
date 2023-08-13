@@ -35,6 +35,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		log.Println(err) // TODO make this debug
 		return status.Error(codes.Internal, "generation of document failed.")
 	}
+	defer CloseAndLogError(result)
 	log.Println("Generation: " + time.Since(start).String())
 	start = time.Now()
 
@@ -75,11 +76,13 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	log.Println("Sneding: " + time.Since(start).String())
 
-	if err := result.Close(); err != nil {
-		log.Print(err) // TODO Make this an error but do not abort
-	}
-
 	return nil
+}
+
+func CloseAndLogError(result GenerationResult) {
+	if err := result.Close(); err != nil {
+		log.Print(err) // TODO Make this an error, log context (requestId) and do not abort; also try to test it that no error/error occurs
+	}
 }
 
 /*
