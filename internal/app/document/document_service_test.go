@@ -55,7 +55,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 
 			for _, expected := range test.expected {
 				actualResponse, actualError := stream.Recv()
-				assert.Equal(t, nil, actualResponse)
+				assert.Nil(t, actualResponse)
 				assert.Equal(t, expected.err, actualError)
 			}
 		})
