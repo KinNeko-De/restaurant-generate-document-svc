@@ -1,9 +1,12 @@
 package document
 
 import (
+	"bufio"
 	"context"
+	"io"
 	"log"
 	"net"
+	"os"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -11,19 +14,20 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	iomocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/io/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func TestGeneratePreview(t *testing.T) {
+func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	ctx := context.Background()
 	client, closer := server(ctx)
 	defer closer()
 
 	type expectation struct {
-		response *documentServiceApi.GeneratePreviewResponse
-		err      error
+		err error
 	}
 
 	tests := map[string]struct {
@@ -36,8 +40,7 @@ func TestGeneratePreview(t *testing.T) {
 			},
 			expected: []expectation{
 				{
-					response: nil,
-					err:      status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
+					err: status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
 				},
 			},
 		},
@@ -52,10 +55,72 @@ func TestGeneratePreview(t *testing.T) {
 
 			for _, expected := range test.expected {
 				actualResponse, actualError := stream.Recv()
-				assert.Equal(t, expected.response, actualResponse)
+				assert.Equal(t, nil, actualResponse)
 				assert.Equal(t, expected.err, actualError)
 			}
 		})
+	}
+}
+
+func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
+	expectedFileSize := uint64(13354)
+	expectedMediaType := "application/pdf"
+	expectedExtension := ".pdf"
+
+	mockReader := iomocks.NewReader(t)
+	//mockReader.EXPECT().Read(mock.AnythingOfType("[]byte")).Return(100, nil).Once()
+	//mockReader.EXPECT().Read(mock.AnythingOfType("[]byte")).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.AnythingOfType("[]uint8")).Return(0, io.EOF).Once()
+	mockGenerator := NewDocumentGeneratorMock(t)
+	generatedFile := GenerationResult{
+		generatedFile: &os.File{},
+		tmpDirectory:  "testDir",
+		Size:          int64(expectedFileSize),
+		Reader:        bufio.NewReader(mockReader),
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	documentGenerator = mockGenerator
+
+	ctx := context.Background()
+	client, closer := server(ctx)
+	defer closer()
+
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+
+	expected := []*documentServiceApi.GeneratePreviewResponse{
+		{
+			File: &documentServiceApi.GeneratePreviewResponse_Metadata{
+				Metadata: &documentServiceApi.GeneratedFileMetadata{
+					Size:      expectedFileSize,
+					MediaType: expectedMediaType,
+					Extension: expectedExtension,
+				},
+			},
+		},
+	}
+
+	stream, err := client.GeneratePreview(ctx, request)
+	assert.NotNil(t, stream)
+	assert.Nil(t, err)
+
+	actualFirstResponse, actualError := stream.Recv()
+	assert.Equal(t, nil, actualError)
+	actualMetadataResponse := actualFirstResponse.GetMetadata()
+	expectedMetadataResponse := expected[0].GetMetadata()
+	assert.NotNil(t, actualMetadataResponse)
+	assert.NotNil(t, actualMetadataResponse.CreatedAt)
+	assert.Equal(t, actualMetadataResponse.MediaType, expectedMetadataResponse.MediaType)
+	assert.Equal(t, actualMetadataResponse.Extension, expectedMetadataResponse.Extension)
+	assert.Equal(t, actualMetadataResponse.Size, expectedMetadataResponse.Size)
+
+	for _, expectedResponse := range expected[1:] {
+		actualResponse, actualError := stream.Recv()
+		assert.Equal(t, nil, actualError)
+		assert.Equal(t, expectedResponse.File, actualResponse)
 	}
 }
 

@@ -31,3 +31,6 @@ scripts/sut/output/**
 
 # build file written by local sut
 build/version.txt
+
+# Downloaded mockery generator
+tools/mockery/windows_x86_64*
