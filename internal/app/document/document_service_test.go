@@ -68,8 +68,8 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedExtension := ".pdf"
 
 	mockReader := iomocks.NewReader(t)
-	// mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
-	// mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockGenerator := NewDocumentGeneratorMock(t)
 	generatedFile := GenerationResult{
@@ -101,6 +101,16 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 				},
 			},
 		},
+		{
+			File: &documentServiceApi.GeneratePreviewResponse_Chunk{
+				Chunk: make([]byte, 100),
+			},
+		},
+		{
+			File: &documentServiceApi.GeneratePreviewResponse_Chunk{
+				Chunk: make([]byte, 100),
+			},
+		},
 	}
 
 	stream, err := client.GeneratePreview(ctx, request)
@@ -109,8 +119,10 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 
 	actualFirstResponse, actualError := stream.Recv()
 	assert.Equal(t, nil, actualError)
+	assert.NotNil(t, actualFirstResponse)
 	actualMetadataResponse := actualFirstResponse.GetMetadata()
 	expectedMetadataResponse := expected[0].GetMetadata()
+	// TODO replace with require
 	assert.NotNil(t, actualMetadataResponse)
 	assert.NotNil(t, actualMetadataResponse.CreatedAt)
 	assert.Equal(t, actualMetadataResponse.MediaType, expectedMetadataResponse.MediaType)
@@ -120,7 +132,9 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	for _, expectedResponse := range expected[1:] {
 		actualResponse, actualError := stream.Recv()
 		assert.Equal(t, nil, actualError)
-		assert.Equal(t, expectedResponse.File, actualResponse)
+		assert.NotNil(t, actualResponse)
+		actualChunk := actualResponse.GetChunk()
+		assert.Equal(t, expectedResponse.GetChunk(), actualChunk)
 	}
 }
 

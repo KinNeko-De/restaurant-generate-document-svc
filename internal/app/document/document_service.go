@@ -49,7 +49,9 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			},
 		},
 	}); err != nil {
-		return err
+		log.Println(err)
+		return status.Error(codes.Internal, "Sending metadata failed.")
+
 	}
 
 	chunks := make([]byte, 0, chunkSize)
@@ -63,7 +65,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 					Chunk: chunks,
 				},
 			}); err != nil {
-				return err
+				log.Println(err)
+				return status.Error(codes.Internal, "Sending chunk failed.")
 			}
 		}
 
@@ -71,6 +74,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			if err == io.EOF {
 				break
 			}
+			log.Println(err)
 			return status.Error(codes.Internal, "generation of document failed.")
 		}
 	}
