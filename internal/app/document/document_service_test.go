@@ -73,7 +73,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockGenerator := NewDocumentGeneratorMock(t)
 	generatedFile := GenerationResult{
-		generatedFile: &os.File{},
+		generatedFile: &os.File{}, // can not be closed and will throw an error
 		tmpDirectory:  "testDir",
 		Size:          int64(expectedFileSize),
 		Reader:        bufio.NewReader(mockReader),
