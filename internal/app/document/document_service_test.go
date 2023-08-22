@@ -68,9 +68,9 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedExtension := ".pdf"
 
 	mockReader := iomocks.NewReader(t)
-	//mockReader.EXPECT().Read(mock.AnythingOfType("[]byte")).Return(100, nil).Once()
-	//mockReader.EXPECT().Read(mock.AnythingOfType("[]byte")).Return(100, nil).Once()
-	mockReader.EXPECT().Read(mock.AnythingOfType("[]uint8")).Return(0, io.EOF).Once()
+	// mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	// mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockGenerator := NewDocumentGeneratorMock(t)
 	generatedFile := GenerationResult{
 		generatedFile: &os.File{},

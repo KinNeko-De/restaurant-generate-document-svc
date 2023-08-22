@@ -54,7 +54,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	chunks := make([]byte, 0, chunkSize)
 	for {
-		numberOfReadBytes, err := result.Reader.Read(chunks[:cap(chunks)])
+		toRead := chunks[:cap(chunks)]
+		numberOfReadBytes, err := result.Reader.Read(toRead)
 		if numberOfReadBytes > 0 {
 			chunks = chunks[:numberOfReadBytes]
 			if err := stream.Send(&documentServiceApi.GeneratePreviewResponse{
@@ -74,7 +75,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		}
 	}
 
-	log.Println("Sneding: " + time.Since(start).String())
+	log.Println("Sending: " + time.Since(start).String())
 
 	return nil
 }
