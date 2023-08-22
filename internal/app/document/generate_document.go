@@ -21,6 +21,7 @@ func init() {
 	documentGenerator = DocumentGeneratorLuatex{}
 }
 
+// TODO make this an interface to make Close() testable
 type GenerationResult struct {
 	generatedFile *os.File
 	tmpDirectory  string
