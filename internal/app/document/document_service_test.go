@@ -27,7 +27,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	defer closer()
 
 	type expectation struct {
-		err error
+		error
 	}
 
 	tests := map[string]struct {
@@ -40,7 +40,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 			},
 			expected: []expectation{
 				{
-					err: status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
+					status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
 				},
 			},
 		},
@@ -56,7 +56,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 			for _, expected := range test.expected {
 				actualResponse, actualError := stream.Recv()
 				assert.Nil(t, actualResponse)
-				assert.Equal(t, expected.err, actualError)
+				assert.Equal(t, expected.error, actualError)
 			}
 		})
 	}
