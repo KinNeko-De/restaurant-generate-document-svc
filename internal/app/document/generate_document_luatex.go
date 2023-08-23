@@ -22,7 +22,7 @@ import (
 type DocumentGeneratorLuatex struct {
 }
 
-func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GenerationResult, err error) {
+func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error) {
 	appRootDirectory := app.Config.RootPath
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
@@ -66,11 +66,13 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *re
 		return result, err
 	}
 
-	return GenerationResult{
-		generatedFile: generatedDocumentFile,
-		tmpDirectory:  tmpDirectory,
-		Reader:        reader,
-		Size:          fileInfo.Size(),
+	return GeneratedFile{
+		Reader: reader,
+		Size:   fileInfo.Size(),
+		Handler: GeneratedFileHandler{
+			file:         generatedDocumentFile,
+			tmpDirectory: tmpDirectory,
+		},
 	}, nil
 }
 

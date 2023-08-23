@@ -57,7 +57,7 @@ func GenerateTestInvoice() {
 	testWriter.Flush()
 	log.Println(strconv.Itoa(totalReadBytes) + "Bytes read")
 
-	if err := result.Close(); err != nil {
+	if err := result.Handler.Close(); err != nil {
 		log.Fatal(err)
 	}
 }

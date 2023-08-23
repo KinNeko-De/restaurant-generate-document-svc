@@ -10,7 +10,7 @@ import (
 )
 
 type DocumentGenerator interface {
-	GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GenerationResult, err error)
+	GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error)
 }
 
 var (
@@ -21,20 +21,27 @@ func init() {
 	documentGenerator = DocumentGeneratorLuatex{}
 }
 
-// TODO make this an interface to make Close() testable
-type GenerationResult struct {
-	generatedFile *os.File
-	tmpDirectory  string
-	Reader        *bufio.Reader
-	Size          int64
+type GeneratedFile struct {
+	Reader  *bufio.Reader
+	Size    int64
+	Handler Handler
 }
 
-func (generationResult GenerationResult) Close() error {
-	closeErr := generationResult.generatedFile.Close()
+type Handler interface {
+	Close() error
+}
+
+type GeneratedFileHandler struct {
+	file         *os.File
+	tmpDirectory string
+}
+
+func (generatedFileHandler GeneratedFileHandler) Close() error {
+	closeErr := generatedFileHandler.file.Close()
 	if closeErr != nil {
 		return closeErr
 	}
-	err := os.RemoveAll(generationResult.tmpDirectory)
+	err := os.RemoveAll(generatedFileHandler.tmpDirectory)
 	return err
 }
 

@@ -84,8 +84,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	return nil
 }
 
-func CloseAndLogError(result GenerationResult) {
-	if err := result.Close(); err != nil {
+func CloseAndLogError(result GeneratedFile) {
+	if err := result.Handler.Close(); err != nil {
 		log.Print(err) // TODO Make this an error, log context (requestId) and do not abort; also try to test it that no error/error occurs
 	}
 }

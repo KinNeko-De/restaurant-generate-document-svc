@@ -24,18 +24,18 @@ func (_m *DocumentGeneratorMock) EXPECT() *DocumentGenerator_Expecter {
 }
 
 // GenerateDocument provides a mock function with given fields: requestId, command
-func (_m *DocumentGeneratorMock) GenerateDocument(requestId uuid.UUID, command *v1.RequestedDocument) (GenerationResult, error) {
+func (_m *DocumentGeneratorMock) GenerateDocument(requestId uuid.UUID, command *v1.RequestedDocument) (GeneratedFile, error) {
 	ret := _m.Called(requestId, command)
 
-	var r0 GenerationResult
+	var r0 GeneratedFile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, *v1.RequestedDocument) (GenerationResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID, *v1.RequestedDocument) (GeneratedFile, error)); ok {
 		return rf(requestId, command)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, *v1.RequestedDocument) GenerationResult); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID, *v1.RequestedDocument) GeneratedFile); ok {
 		r0 = rf(requestId, command)
 	} else {
-		r0 = ret.Get(0).(GenerationResult)
+		r0 = ret.Get(0).(GeneratedFile)
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID, *v1.RequestedDocument) error); ok {
@@ -66,12 +66,12 @@ func (_c *DocumentGenerator_GenerateDocument_Call) Run(run func(requestId uuid.U
 	return _c
 }
 
-func (_c *DocumentGenerator_GenerateDocument_Call) Return(result GenerationResult, err error) *DocumentGenerator_GenerateDocument_Call {
+func (_c *DocumentGenerator_GenerateDocument_Call) Return(result GeneratedFile, err error) *DocumentGenerator_GenerateDocument_Call {
 	_c.Call.Return(result, err)
 	return _c
 }
 
-func (_c *DocumentGenerator_GenerateDocument_Call) RunAndReturn(run func(uuid.UUID, *v1.RequestedDocument) (GenerationResult, error)) *DocumentGenerator_GenerateDocument_Call {
+func (_c *DocumentGenerator_GenerateDocument_Call) RunAndReturn(run func(uuid.UUID, *v1.RequestedDocument) (GeneratedFile, error)) *DocumentGenerator_GenerateDocument_Call {
 	_c.Call.Return(run)
 	return _c
 }
