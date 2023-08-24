@@ -35,7 +35,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 		log.Println(err) // TODO make this debug
 		return status.Error(codes.Internal, "generation of document failed.")
 	}
-	defer CloseAndLogError(result)
+	defer CloseAndLogError(result.Handler)
+
 	log.Println("Generation: " + time.Since(start).String())
 	start = time.Now()
 
@@ -51,7 +52,6 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	}); err != nil {
 		log.Println(err)
 		return status.Error(codes.Internal, "Sending metadata failed.")
-
 	}
 
 	chunks := make([]byte, 0, chunkSize)
@@ -80,12 +80,11 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	}
 
 	log.Println("Sending: " + time.Since(start).String())
-
 	return nil
 }
 
-func CloseAndLogError(result GeneratedFile) {
-	if err := result.Handler.Close(); err != nil {
+func CloseAndLogError(fileHandler FileHandler) {
+	if err := fileHandler.Close(); err != nil {
 		log.Print(err) // TODO Make this an error, log context (requestId) and do not abort; also try to test it that no error/error occurs
 	}
 }

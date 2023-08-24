@@ -67,19 +67,19 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedExtension := ".pdf"
 
 	mockReader := iomocks.NewReader(t)
-	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
-	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
-	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
-	mockGenerator := NewDocumentGeneratorMock(t)
-	mockFileHandler := NewFileHandlerMock(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
 	generatedFile := GeneratedFile{
 		Size:    int64(expectedFileSize),
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
 	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
 	documentGenerator = mockGenerator
-	mockFileHandler.EXPECT().Close().Return(nil)
 	ctx := context.Background()
 	client, closer := server(ctx)
 	defer closer()
@@ -89,7 +89,6 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 			Type: &documentServiceApi.RequestedDocument_Invoice{},
 		},
 	}
-
 	expected := []*documentServiceApi.GeneratePreviewResponse{
 		{
 			File: &documentServiceApi.GeneratePreviewResponse_Metadata{
@@ -113,9 +112,9 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	}
 
 	stream, err := client.GeneratePreview(ctx, request)
+
 	assert.NotNil(t, stream)
 	assert.Nil(t, err)
-
 	actualFirstResponse, actualError := stream.Recv()
 	assert.Equal(t, nil, actualError)
 	assert.NotNil(t, actualFirstResponse)
@@ -127,7 +126,6 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	assert.Equal(t, actualMetadataResponse.MediaType, expectedMetadataResponse.MediaType)
 	assert.Equal(t, actualMetadataResponse.Extension, expectedMetadataResponse.Extension)
 	assert.Equal(t, actualMetadataResponse.Size, expectedMetadataResponse.Size)
-
 	for _, expectedResponse := range expected[1:] {
 		actualResponse, actualError := stream.Recv()
 		assert.Equal(t, nil, actualError)
@@ -135,6 +133,10 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 		actualChunk := actualResponse.GetChunk()
 		assert.Equal(t, expectedResponse.GetChunk(), actualChunk)
 	}
+	_, endOfDtreamError := stream.Recv()
+	assert.Equal(t, io.EOF, endOfDtreamError)
+	closeErr := stream.CloseSend()
+	assert.Nil(t, closeErr)
 }
 
 func server(ctx context.Context) (documentServiceApi.DocumentServiceClient, func()) {
