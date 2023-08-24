@@ -24,10 +24,10 @@ func init() {
 type GeneratedFile struct {
 	Reader  *bufio.Reader
 	Size    int64
-	Handler Handler
+	Handler FileHandler
 }
 
-type Handler interface {
+type FileHandler interface {
 	Close() error
 }
 

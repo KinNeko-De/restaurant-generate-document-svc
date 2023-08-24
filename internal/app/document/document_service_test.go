@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -72,17 +71,15 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockGenerator := NewDocumentGeneratorMock(t)
+	mockFileHandler := NewFileHandlerMock(t)
 	generatedFile := GeneratedFile{
-		Size:   int64(expectedFileSize),
-		Reader: bufio.NewReader(mockReader),
-		Handler: GeneratedFileHandler{
-			file:         &os.File{},
-			tmpDirectory: "testDir",
-		},
+		Size:    int64(expectedFileSize),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
 	}
 	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	documentGenerator = mockGenerator
-
+	mockFileHandler.EXPECT().Close().Return(nil)
 	ctx := context.Background()
 	client, closer := server(ctx)
 	defer closer()
