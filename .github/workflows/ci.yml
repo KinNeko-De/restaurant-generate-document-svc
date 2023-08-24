@@ -71,6 +71,10 @@ jobs:
       - name: "Test"
         run: |
           go test ./... -race -coverprofile=coverage.out
+      - name: "Exclude codecoverage"
+        run: |
+          grep -v -E -f .covignore coverage.out > coverage.filtered.out
+          mv coverage.filtered.out coverage.out
       - name: "Code coverage"
         uses: codecov/codecov-action@v3
       - name: Create semantic versioning git tag for golang
