@@ -5,16 +5,12 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
-	"net"
 	"testing"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
-
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	documentfixture "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document"
 	documentmocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document/mocks"
+
 	iomocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/io/mocks"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +22,7 @@ import (
 
 func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	ctx := context.Background()
-	client, closer := server(ctx)
+	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
 	defer closer()
 
 	type expectation struct {
@@ -85,7 +81,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	mockFileHandler.EXPECT().Close().Return(nil).Once()
 	documentGenerator = mockGenerator
 	ctx := context.Background()
-	client, closer := server(ctx)
+	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
 	defer closer()
 
 	request := &documentServiceApi.GeneratePreviewRequest{
@@ -140,39 +136,6 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	assert.Equal(t, io.EOF, endOfDtreamError)
 	closeErr := stream.CloseSend()
 	assert.Nil(t, closeErr)
-}
-
-func server(ctx context.Context) (documentServiceApi.DocumentServiceClient, func()) {
-	buffer := 101024 * 1024
-	lis := bufconn.Listen(buffer)
-
-	baseServer := grpc.NewServer()
-	documentServiceApi.RegisterDocumentServiceServer(baseServer, &DocumentServiceServer{})
-	go func() {
-		if err := baseServer.Serve(lis); err != nil {
-			log.Printf("error serving server: %v", err)
-		}
-	}()
-
-	conn, err := grpc.DialContext(ctx, "",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return lis.Dial()
-		}), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Printf("error connecting to server: %v", err)
-	}
-
-	closer := func() {
-		err := lis.Close()
-		if err != nil {
-			log.Printf("error closing listener: %v", err)
-		}
-		baseServer.Stop()
-	}
-
-	client := documentServiceApi.NewDocumentServiceClient(conn)
-
-	return client, closer
 }
 
 func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
