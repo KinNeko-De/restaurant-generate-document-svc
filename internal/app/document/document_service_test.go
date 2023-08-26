@@ -3,6 +3,7 @@ package document
 import (
 	"bufio"
 	"context"
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -13,9 +14,12 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	documentmocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document/mocks"
 	iomocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/io/mocks"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -62,7 +66,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 }
 
 func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
-	expectedFileSize := uint64(13354)
+	expectedFileSize := uint64(chunkSize + 100)
 	expectedMediaType := "application/pdf"
 	expectedExtension := ".pdf"
 
@@ -75,7 +79,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 		Handler: mockFileHandler,
 	}
 	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
-	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(chunkSize, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockFileHandler.EXPECT().Close().Return(nil).Once()
@@ -101,7 +105,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 		},
 		{
 			File: &documentServiceApi.GeneratePreviewResponse_Chunk{
-				Chunk: make([]byte, 100),
+				Chunk: make([]byte, chunkSize),
 			},
 		},
 		{
@@ -116,19 +120,18 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	assert.NotNil(t, stream)
 	assert.Nil(t, err)
 	actualFirstResponse, actualError := stream.Recv()
-	assert.Equal(t, nil, actualError)
-	assert.NotNil(t, actualFirstResponse)
+	require.Nil(t, actualError)
+	require.NotNil(t, actualFirstResponse)
 	actualMetadataResponse := actualFirstResponse.GetMetadata()
 	expectedMetadataResponse := expected[0].GetMetadata()
-	// TODO replace with require
-	assert.NotNil(t, actualMetadataResponse)
+	require.NotNil(t, actualMetadataResponse)
 	assert.NotNil(t, actualMetadataResponse.CreatedAt)
 	assert.Equal(t, actualMetadataResponse.MediaType, expectedMetadataResponse.MediaType)
 	assert.Equal(t, actualMetadataResponse.Extension, expectedMetadataResponse.Extension)
 	assert.Equal(t, actualMetadataResponse.Size, expectedMetadataResponse.Size)
 	for _, expectedResponse := range expected[1:] {
 		actualResponse, actualError := stream.Recv()
-		assert.Equal(t, nil, actualError)
+		require.Nil(t, actualError)
 		assert.NotNil(t, actualResponse)
 		actualChunk := actualResponse.GetChunk()
 		assert.Equal(t, expectedResponse.GetChunk(), actualChunk)
@@ -170,4 +173,84 @@ func server(ctx context.Context) (documentServiceApi.DocumentServiceClient, func
 	client := documentServiceApi.NewDocumentServiceClient(conn)
 
 	return client, closer
+}
+
+func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(GeneratedFile{}, errors.New("TestError"))
+	documentGenerator = mockGenerator
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
+}
+
+func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(544),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockStream.EXPECT().Send(mock.Anything).Return(errors.New("Network error")).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
+	documentGenerator = mockGenerator
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
+}
+
+func TestGeneratePreview_SendChunkFailed(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(544),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockReader.EXPECT().Read(mock.Anything).Return(1, nil).Once()
+	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
+	mockStream.EXPECT().Send(mock.Anything).Return(errors.New("Network error")).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
+	documentGenerator = mockGenerator
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
 }
