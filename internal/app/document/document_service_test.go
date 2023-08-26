@@ -20,47 +20,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestGeneratePreview_InvalidRequests(t *testing.T) {
-	ctx := context.Background()
-	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
-	defer closer()
-
-	type expectation struct {
-		error
-	}
-
-	tests := map[string]struct {
-		request  *documentServiceApi.GeneratePreviewRequest
-		expected []expectation
-	}{
-		"RequestedDocumentIsNil": {
-			request: &documentServiceApi.GeneratePreviewRequest{
-				RequestedDocument: nil,
-			},
-			expected: []expectation{
-				{
-					status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
-				},
-			},
-		},
-	}
-
-	for scenario, test := range tests {
-		t.Run(scenario, func(t *testing.T) {
-
-			stream, err := client.GeneratePreview(ctx, test.request)
-			assert.NotNil(t, stream)
-			assert.Nil(t, err)
-
-			for _, expected := range test.expected {
-				actualResponse, actualError := stream.Recv()
-				assert.Nil(t, actualResponse)
-				assert.Equal(t, expected.error, actualError)
-			}
-		})
-	}
-}
-
 func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedFileSize := uint64(chunkSize + 100)
 	expectedMediaType := "application/pdf"
@@ -136,6 +95,47 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	assert.Equal(t, io.EOF, endOfDtreamError)
 	closeErr := stream.CloseSend()
 	assert.Nil(t, closeErr)
+}
+
+func TestGeneratePreview_InvalidRequests(t *testing.T) {
+	ctx := context.Background()
+	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
+	defer closer()
+
+	type expectation struct {
+		error
+	}
+
+	tests := map[string]struct {
+		request  *documentServiceApi.GeneratePreviewRequest
+		expected []expectation
+	}{
+		"RequestedDocumentIsNil": {
+			request: &documentServiceApi.GeneratePreviewRequest{
+				RequestedDocument: nil,
+			},
+			expected: []expectation{
+				{
+					status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document."),
+				},
+			},
+		},
+	}
+
+	for scenario, test := range tests {
+		t.Run(scenario, func(t *testing.T) {
+
+			stream, err := client.GeneratePreview(ctx, test.request)
+			assert.NotNil(t, stream)
+			assert.Nil(t, err)
+
+			for _, expected := range test.expected {
+				actualResponse, actualError := stream.Recv()
+				assert.Nil(t, actualResponse)
+				assert.Equal(t, expected.error, actualError)
+			}
+		})
+	}
 }
 
 func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
@@ -216,4 +216,60 @@ func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 	require.NotNil(t, actualError)
 	actual := status.Code(actualError)
 	assert.Equal(t, expected, actual)
+}
+
+func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(544),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, errors.New("Reading file failed")).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
+	documentGenerator = mockGenerator
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
+}
+
+func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(544),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
+	mockFileHandler.EXPECT().Close().Return(errors.New("Closing file failed.")).Once()
+	documentGenerator = mockGenerator
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+	assert.Nil(t, actualError)
 }
