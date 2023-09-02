@@ -98,15 +98,12 @@ func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory s
 }
 
 func getTemplateName(command *restaurantDocumentApi.RequestedDocument) (string, proto.Message) {
-	var rootObject string
-	var message proto.Message
-	switch command.Type.(type) {
-	case *restaurantDocumentApi.RequestedDocument_Invoice:
-		rootObject = "Invoice"
-		message = command.GetInvoice()
-	default:
-		log.Fatalf("Document %v not supported yet", command.Type)
-	}
+	ref := command.ProtoReflect()
+	refDescriptor := ref.Descriptor()
+	setValue := ref.WhichOneof(refDescriptor.Oneofs().ByName("type"))
+	fieldName := setValue.Message().Name()
+	message := command.ProtoReflect().Get(setValue).Message().Interface()
+	rootObject := string(fieldName)
 	return rootObject, message
 }
 
