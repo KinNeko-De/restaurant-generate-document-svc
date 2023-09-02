@@ -1,4 +1,6 @@
-FROM texlive/texlive:latest AS base
+FROM kinnekode/texlive-luatex:bookworm-slim AS base
+
+EXPOSE 3110
 
 WORKDIR /app
 
