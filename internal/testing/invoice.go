@@ -3,7 +3,6 @@ package testing
 import (
 	"bufio"
 	"io"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	apiRestaurantDocument "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/document"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -24,9 +24,10 @@ func GenerateTestInvoice() {
 	requestId := uuid.New()
 	outputDirectory := path.Join(appRootDirectory, "output")
 	document.CreateDirectoryForRun(outputDirectory)
-	f, err := os.Create(path.Join(outputDirectory, requestId.String()+".pdf"))
+	outputFile := path.Join(outputDirectory, requestId.String()+".pdf")
+	f, err := os.Create(outputFile)
 	if err != nil {
-		log.Fatal(err)
+		operation.Logger.Fatal().Err(err).Msgf("Could not output file: %v", outputFile)
 	}
 	defer f.Close()
 	testWriter := bufio.NewWriter(f)
@@ -35,7 +36,7 @@ func GenerateTestInvoice() {
 	chunks := make([]byte, 0, chunkSize)
 	result, err := document.DocumentGeneratorLuatex{}.GenerateDocument(requestId, requestedDocument)
 	if err != nil {
-		log.Fatal(err)
+		operation.Logger.Fatal().Err(err).Msg("Generation of document failed.")
 	}
 	totalReadBytes := 0
 	for {
@@ -50,15 +51,15 @@ func GenerateTestInvoice() {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			operation.Logger.Fatal().Err(err).Msg("Reading of document failed.")
 		}
 	}
 
 	testWriter.Flush()
-	log.Println(strconv.Itoa(totalReadBytes) + "Bytes read")
+	operation.Logger.Info().Msgf("%v Bytes read", strconv.Itoa(totalReadBytes))
 
 	if err := result.Handler.Close(); err != nil {
-		log.Fatal(err)
+		operation.Logger.Fatal().Err(err).Msg("Closing of document failed.")
 	}
 }
 

@@ -3,7 +3,6 @@ package document
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -53,8 +52,6 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *re
 	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
 		return result, err
 	}
-
-	log.Println("Document generated.") // TODO make this debug
 
 	generatedDocumentFile, reader, err := createAccessToOutputfile(outputDirectory, rootObject)
 	if err != nil {

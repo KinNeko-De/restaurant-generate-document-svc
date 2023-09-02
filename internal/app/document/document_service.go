@@ -2,12 +2,13 @@ package document
 
 import (
 	"io"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,22 +23,24 @@ type DocumentServiceServer struct {
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
 	start := time.Now()
 	requestId := uuid.New()
+	logger := operation.Logger.With().Str("requestId", requestId.String()).Logger()
 
 	if request.RequestedDocument == nil {
 		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
 	}
 
-	log.Println("Preprocessing: " + time.Since(start).String())
+	logger.Debug().Msgf("Preprocessing: %v", time.Since(start))
 	start = time.Now()
 
 	result, err := documentGenerator.GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
-		log.Println(err) // TODO make this debug
-		return status.Error(codes.Internal, "generation of document failed.")
+		logger.Err(err).Msg("Generation of document failed.")
+		return status.Error(codes.Internal, "Generation of document failed.")
 	}
-	defer CloseAndLogError(result.Handler)
+	defer CloseAndLogError(result.Handler, logger)
+	logger.Debug().Msg("Document generated.")
 
-	log.Println("Generation: " + time.Since(start).String())
+	logger.Debug().Msgf("Generation: %v", time.Since(start))
 	start = time.Now()
 
 	if err := stream.Send(&documentServiceApi.GeneratePreviewResponse{
@@ -50,7 +53,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			},
 		},
 	}); err != nil {
-		log.Println(err)
+		logger.Err(err).Msg("Sending metadata failed.")
 		return status.Error(codes.Internal, "Sending metadata failed.")
 	}
 
@@ -65,7 +68,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 					Chunk: chunks,
 				},
 			}); err != nil {
-				log.Println(err)
+				logger.Err(err).Msg("Sending chunk failed.")
 				return status.Error(codes.Internal, "Sending chunk failed.")
 			}
 		}
@@ -74,30 +77,17 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 			if err == io.EOF {
 				break
 			}
-			log.Println(err)
+			logger.Err(err).Msg("Generation of document failed.")
 			return status.Error(codes.Internal, "generation of document failed.")
 		}
 	}
 
-	log.Println("Sending: " + time.Since(start).String())
+	logger.Debug().Msgf("Sending: %v", time.Since(start))
 	return nil
 }
 
-func CloseAndLogError(fileHandler FileHandler) {
+func CloseAndLogError(fileHandler FileHandler, logger zerolog.Logger) {
 	if err := fileHandler.Close(); err != nil {
-		log.Print(err) // TODO Make this an error, log context (requestId) and do not abort; also try to test it that no error/error occurs
+		logger.Err(err).Msg("Closing and cleap files fail.")
 	}
 }
-
-/*
-func ParseRequestId(request *documentServiceApi.GeneratePreviewRequest) (uuid uuid.UUID, grpcError error) {
-	if request.RequestId == nil {
-		return uuid, status.Error(codes.InvalidArgument, "requestId is mandatory to generate a document.")
-	}
-	requestId, err := protobuf.ToUuid(request.RequestId)
-	if err != nil {
-		return uuid, status.Error(codes.InvalidArgument, "requestId '"+request.RequestId.Value+"' is not a valid uuid. expect uuid in the following format: 550e8400-e29b-11d4-a716-446655440000")
-	}
-	return requestId, nil
-}
-*/

@@ -2,7 +2,6 @@ package document
 
 import (
 	"context"
-	"log"
 	"net"
 
 	"google.golang.org/grpc"
@@ -10,17 +9,19 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
 )
 
 func CreateDocumentServiceClient(ctx context.Context, server documentServiceApi.DocumentServiceServer) (documentServiceApi.DocumentServiceClient, func()) {
-	buffer := 101024 * 1024
+	logger := operation.Logger.With().Ctx(ctx).Logger()
+	buffer := 65536 // 64 * 1024
 	lis := bufconn.Listen(buffer)
 
 	baseServer := grpc.NewServer()
 	documentServiceApi.RegisterDocumentServiceServer(baseServer, server)
 	go func() {
 		if err := baseServer.Serve(lis); err != nil {
-			log.Printf("error serving server: %v", err)
+			logger.Error().Msgf("error serving server: %v", err)
 		}
 	}()
 
@@ -29,13 +30,13 @@ func CreateDocumentServiceClient(ctx context.Context, server documentServiceApi.
 			return lis.Dial()
 		}), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("error connecting to server: %v", err)
+		logger.Error().Msgf("error connecting to server: %v", err)
 	}
 
 	closer := func() {
 		err := lis.Close()
 		if err != nil {
-			log.Printf("error closing listener: %v", err)
+			logger.Error().Msgf("error closing listener: %v", err)
 		}
 		baseServer.Stop()
 	}
