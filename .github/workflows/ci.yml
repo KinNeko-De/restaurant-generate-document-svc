@@ -5,7 +5,7 @@ on:
       - 'documentation/**'
 
 env:
-  MAJOR_MINOR_PATCH: 0.2.2
+  MAJOR_MINOR_PATCH: 0.3.0
 
 concurrency: ci-${{ github.ref }}
 
