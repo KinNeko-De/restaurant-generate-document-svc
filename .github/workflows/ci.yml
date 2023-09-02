@@ -5,7 +5,7 @@ on:
       - 'documentation/**'
 
 env:
-  MAJOR_MINOR_PATCH: 0.2.0
+  MAJOR_MINOR_PATCH: 0.2.1
 
 concurrency: ci-${{ github.ref }}
 
@@ -52,7 +52,7 @@ jobs:
           echo "use_version_suffix=$USE" >> $GITHUB_OUTPUT
           echo "version_suffix=$SUFFIX" >> $GITHUB_OUTPUT
           echo "extension=$EXTENSION" >> $GITHUB_OUTPUT
-      - name : Semantic version
+      - name: Semantic version
         id: semantic_version
         run: |
           SEMANTIC_VERSION="${{ env.MAJOR_MINOR_PATCH }}"
