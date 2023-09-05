@@ -7,14 +7,16 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Logger zerolog.Logger
+var Logger zerolog.Logger = zerolog.New(os.Stdout).With().
+	Timestamp().
+	Caller().
+	Str("version", build.Version).
+	Logger()
 
-func init() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+func SetDefaultLoggingLevel() {
+	SetLoggingLevel(zerolog.InfoLevel)
+}
 
-	Logger = zerolog.New(os.Stdout).With().
-		Timestamp().
-		Caller().
-		Str("version", build.Version).
-		Logger()
+func SetLoggingLevel(level zerolog.Level) {
+	zerolog.SetGlobalLevel(level)
 }

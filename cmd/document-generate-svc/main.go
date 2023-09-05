@@ -20,6 +20,7 @@ var (
 )
 
 func main() {
+	operation.SetDefaultLoggingLevel()
 	StartGrpcServer()
 }
 
