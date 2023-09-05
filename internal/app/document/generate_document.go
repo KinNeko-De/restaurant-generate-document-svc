@@ -14,12 +14,8 @@ type DocumentGenerator interface {
 }
 
 var (
-	documentGenerator DocumentGenerator
+	documentGenerator DocumentGenerator = DocumentGeneratorLuatex{}
 )
-
-func init() {
-	documentGenerator = DocumentGeneratorLuatex{}
-}
 
 type GeneratedFile struct {
 	Reader  *bufio.Reader
