@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
 	documentfixture "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document"
 	documentmocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document/mocks"
 
@@ -25,6 +26,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedMediaType := "application/pdf"
 	expectedExtension := ".pdf"
 
+	metric.InitializeMetrics()
 	mockReader := iomocks.NewReader(t)
 	mockGenerator := NewMockDocumentGenerator(t)
 	mockFileHandler := NewMockFileHandler(t)
@@ -99,6 +101,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 
 func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	ctx := context.Background()
+	metric.InitializeMetrics()
 	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
 	defer closer()
 
@@ -141,6 +144,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 	expected := codes.Internal
 
+	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -161,6 +165,7 @@ func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 	expected := codes.Internal
 
+	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -190,6 +195,7 @@ func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 	expected := codes.Internal
 
+	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -221,6 +227,7 @@ func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 	expected := codes.Internal
 
+	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -249,6 +256,7 @@ func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 }
 
 func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
+	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
