@@ -9,7 +9,8 @@ import (
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/document"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,7 +21,8 @@ var (
 )
 
 func main() {
-	operation.SetDefaultLoggingLevel()
+	logger.SetInfoLogLevel()
+	metric.InitializeMetrics()
 	StartGrpcServer()
 }
 
@@ -28,7 +30,7 @@ func StartGrpcServer() {
 	port := "3110"
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		operation.Logger.Fatal().Err(err).Msgf("Failed to listen on port %v", port)
+		logger.Logger.Fatal().Err(err).Msgf("Failed to listen on port %v", port)
 	}
 
 	// Handling of panic to prevent crash from example nil pointer exceptions
@@ -51,7 +53,7 @@ func StartGrpcServer() {
 	)
 	RegisterAllGrpcServices(grpcServer)
 	if err := grpcServer.Serve(listener); err != nil {
-		operation.Logger.Fatal().Err(err).Msg("Failed to start grpc server.")
+		logger.Logger.Fatal().Err(err).Msg("Failed to start grpc server.")
 	}
 }
 

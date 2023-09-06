@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,7 +23,7 @@ type DocumentServiceServer struct {
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
 	start := time.Now()
 	requestId := uuid.New()
-	logger := operation.Logger.With().Str("requestId", requestId.String()).Logger()
+	logger := logger.Logger.With().Str("requestId", requestId.String()).Logger()
 
 	if request.RequestedDocument == nil {
 		return status.Error(codes.InvalidArgument, "requested document is mandatory to generate a document.")
@@ -32,9 +32,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	logger.Debug().Msgf("Preprocessing: %v", time.Since(start))
 	start = time.Now()
 
-	result, err := documentGenerator.GenerateDocument(requestId, request.RequestedDocument)
+	result, err := GenerateDocument(requestId, request.RequestedDocument, logger)
 	if err != nil {
-		logger.Err(err).Msg("Generation of document failed.")
 		return status.Error(codes.Internal, "Generation of document failed.")
 	}
 	defer CloseAndLogError(result.Handler, logger)

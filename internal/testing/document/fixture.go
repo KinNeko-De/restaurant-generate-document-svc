@@ -9,11 +9,11 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
 )
 
 func CreateDocumentServiceClient(ctx context.Context, server documentServiceApi.DocumentServiceServer) (documentServiceApi.DocumentServiceClient, func()) {
-	logger := operation.Logger.With().Ctx(ctx).Logger()
+	logger := logger.Logger.With().Ctx(ctx).Logger()
 	buffer := 65536 // 64 * 1024
 	lis := bufconn.Listen(buffer)
 

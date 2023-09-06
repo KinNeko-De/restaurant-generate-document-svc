@@ -1,4 +1,4 @@
-package operation
+package logger
 
 import (
 	"os"
@@ -13,10 +13,10 @@ var Logger zerolog.Logger = zerolog.New(os.Stdout).With().
 	Str("version", build.Version).
 	Logger()
 
-func SetDefaultLoggingLevel() {
-	SetLoggingLevel(zerolog.InfoLevel)
+func SetInfoLogLevel() {
+	SetLogLevel(zerolog.InfoLevel)
 }
 
-func SetLoggingLevel(level zerolog.Level) {
+func SetLogLevel(level zerolog.Level) {
 	zerolog.SetGlobalLevel(level)
 }

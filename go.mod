@@ -34,6 +34,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/rs/zerolog v1.30.0
 	github.com/stretchr/testify v1.8.4
+	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.40.0
 	go.opentelemetry.io/otel/metric v1.17.0
 	go.opentelemetry.io/otel/sdk/metric v0.40.0
 	golang.org/x/net v0.12.0 // indirect
