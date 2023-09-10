@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/cmd/document-generate-svc/main.go",
             "showLog": true,
             "env": {
-              "APP_ROOT_PATH" : "../../scripts/sut"
+              "APP_ROOT_PATH" : "../../scripts/sut",
+              "OTEL_SERVICE_NAME": "restaurant.document-generate-svc"
             }
         },
         {
@@ -23,7 +24,8 @@
             "program": "${workspaceFolder}/cmd/document-generate-test/main.go",
             "showLog": true,
             "env": {
-              "APP_ROOT_PATH" : "../../scripts/sut"
+              "APP_ROOT_PATH" : "../../scripts/sut",
+              "OTEL_SERVICE_NAME": "restaurant.document-generate-test"
             }
         }
     ]

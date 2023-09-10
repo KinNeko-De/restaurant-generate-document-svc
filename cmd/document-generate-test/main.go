@@ -11,5 +11,5 @@ func main() {
 	logger.SetLogLevel(zerolog.DebugLevel)
 	metric.InitializeMetrics()
 	testing.GenerateTestInvoice()
-	metric.ForceFlush()
+	metric.ForceFlush() // otherwise, the metrics will not be sent to the collector and console
 }
