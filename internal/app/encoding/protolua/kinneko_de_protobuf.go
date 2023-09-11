@@ -1,7 +1,7 @@
 package protolua
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -19,7 +19,7 @@ func (KinnekoDeProtobuf) Handle(fullName protoreflect.FullName) (protolua.Marsha
 		case KinNekoDeProtobufDecimal:
 			return convertDecimal, nil
 		default:
-			return nil, errors.New(string(fullName) + " is not supported yet")
+			return nil, fmt.Errorf("%s is not supported yet", fullName.Name())
 		}
 	}
 	return nil, nil
