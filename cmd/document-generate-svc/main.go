@@ -23,10 +23,11 @@ var (
 func main() {
 	logger.SetInfoLogLevel()
 	metric.InitializeMetrics()
-	StartGrpcServer()
+	grpcServer := StartGrpcServer()
+	defer grpcServer.GracefulStop()
 }
 
-func StartGrpcServer() {
+func StartGrpcServer() *grpc.Server {
 	port := "3110"
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -55,6 +56,7 @@ func StartGrpcServer() {
 	if err := grpcServer.Serve(listener); err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to start grpc server.")
 	}
+	return grpcServer
 }
 
 func RegisterAllGrpcServices(grpcServer *grpc.Server) {
