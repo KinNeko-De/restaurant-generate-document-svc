@@ -72,7 +72,7 @@ jobs:
           go build -o bin/app ./${{ env.MAIN_PACKAGE }}
       - name: "Test"
         run: |
-          go test ./... -race -coverprofile=coverage.out
+          go test ./... -race -coverprofile=coverage.out -timeout 5m
       - name: "Exclude codecoverage"
         run: |
           grep -v -E -f .covignore coverage.out > coverage.filtered.out
