@@ -22,7 +22,7 @@ var (
 )
 
 func InitializeMetrics() (err error) {
-	otelReader, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint("0.0.0.0:4317"))
+	otelReader, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint("otel-collector:4317"))
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to otel collector")
 	}
