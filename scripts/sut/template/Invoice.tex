@@ -69,17 +69,10 @@ Rechnungsdetails
       tex.sprint("{", item.totalAmount, " €}", " & ")
       tex.print("{", item.sum, " €}", "\\tabularnewline")
     end
+    tex.print("\\hline")
+    tex.print(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}\\\\")
     tex.print("\\end{tabular*}")
     \end{luacode}
 \end{minipage}
 
-\hfill{}%
-\begin{minipage}[t]{0.3\columnwidth}%
-Gesamtpreis%
-\end{minipage}%
-\noindent\begin{minipage}[t]{0.1\columnwidth}%
-\begin{flushright}
-18,77 €
-\end{flushright}%
-\end{minipage}
 \end{document}
