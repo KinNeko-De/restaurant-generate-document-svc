@@ -6,7 +6,7 @@ EXPOSE 3110
 
 ARG USER_UID=1001
 RUN useradd -u ${USER_UID} appuser
-RUN chown -R appuser /texlive
+RUN chown -R --no-dereference appuser /texlive
 RUN chmod -R 777 /texlive
 USER ${USER_UID}
 
