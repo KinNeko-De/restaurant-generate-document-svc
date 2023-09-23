@@ -60,9 +60,9 @@
 \small
 
 \begin{luacode}
-  tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\columncolor{gray!10}}X>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
-  tex.sprint("\\multicolumn{6}{l}{Rechnungsdetails} \\\\")
-  tex.sprint("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Zwischensumme} \\\\")
+  tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\raggedright}X>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}}")
+  tex.sprint("\\multicolumn{6}{l}{\\normalsize Rechnungsdetails} \\\\")
+  tex.sprint("{\\footnotesize Beschreibung} & {\\footnotesize Menge} & {\\footnotesize Stückpreis} & {\\footnotesize USt. \\%} & {\\footnotesize Stückpreis} & {\\footnotesize Zwischensumme} \\\\")
   for _, item in ipairs(model.invoice.items) do
     tex.sprint("{", item.description, "} & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\\\")
   end
@@ -70,41 +70,5 @@
   tex.sprint("\\end{tabularx}")
 \end{luacode}
 
-% \begin{tabularx}{\textwidth}{Xrrrrr}
-%   \multicolumn{6}{l}{Rechnungsdetails}
-%   {Beschreibung} & {Menge} & {Stückpreis} & {USt. \%} & {Stückpreis} & {Zwischensumme}
-%   {Pizza Margherita} & {1} & {4.50} € & {19 \%} & {5.36} € & {5.36} €
-%   \cline{1-6}
-%   & \multicolumn{4}{l}{Gesamtpreis} & {18.77 €}
-% \end{tabularx}
-
-% \begin{luacode}
-%   tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\columncolor{gray!10}}X>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
-%   tex.sprint("\\multicolumn{6}{l}{Rechnungsdetails}\\tabularnewline")
-%   tex.sprint("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Zwischensumme}")
-%   for _, item in ipairs(model.invoice.items) do
-%     tex.sprint(item.description, " & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\tabularnewline")
-%   end
-%   tex.sprint("\\cline{1-6}")
-%   tex.sprint(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}")
-%   tex.sprint("\\end{tabularx}")
-% \end{luacode}
-
-% \begin{luacode}
-%   tex.print("\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}>{\\raggedright\\columncolor{gray!10}}p{0.3\\columnwidth}>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
-%   tex.print("\\multicolumn{6}{l}{Rechnungsdetails}\\tabularnewline")
-%   tex.print("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Summe}\\tabularnewline")
-%   for _, item in ipairs(model.invoice.items) do
-%     tex.sprint("{", item.description, "}", " & ")
-%     tex.sprint("{", item.quantity, "}", " & ")
-%     tex.sprint("{", item.netAmount, " €}", " & ")
-%     tex.sprint("{", item.taxation, " \\%}", " & ")
-%     tex.sprint("{", item.totalAmount, " €}", " & ")
-%     tex.print("{", item.sum, " €}", "\\tabularnewline")
-%   end
-%   tex.print("\\cline{1-6}")
-%   tex.print(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}\\\\")
-%   tex.print("\\end{tabular*}")
-% \end{luacode}
 
 \end{document}
