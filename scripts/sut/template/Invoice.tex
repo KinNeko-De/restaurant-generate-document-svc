@@ -62,11 +62,11 @@
 \begin{luacode}
   tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\raggedright}X>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}}")
   tex.sprint("\\multicolumn{6}{l}{\\normalsize Rechnungsdetails} \\\\")
-  tex.sprint("{\\footnotesize Beschreibung} & {\\footnotesize Menge} & {\\footnotesize Stückpreis} & {\\footnotesize USt. \\%} & {\\footnotesize Stückpreis} & {\\footnotesize Zwischensumme} \\\\")
+  tex.sprint("{\\footnotesize Beschreibung} & {\\footnotesize Menge} & {\\footnotesize Stückpreis ohne USt.} & {\\footnotesize USt. \\%} & {\\footnotesize Stückpreis inkl. USt.} & {\\footnotesize Zwischensumme} \\\\")
   for _, item in ipairs(model.invoice.items) do
     tex.sprint("{", item.description, "} & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\\\")
   end
-  tex.sprint(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €} \\\\")
+  tex.sprint(" & \\multicolumn{4}{l}{\\normalsize Gesamtpreis} & {\\normalsize ", 18.77, " €} \\\\")
   tex.sprint("\\end{tabularx}")
 \end{luacode}
 
