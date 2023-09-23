@@ -61,15 +61,14 @@
 
 \begin{luacode}
   tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\columncolor{gray!10}}X>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
+  tex.sprint("\\multicolumn{6}{l}{Rechnungsdetails} \\\\")
+  tex.sprint("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Zwischensumme} \\\\")
+  for _, item in ipairs(model.invoice.items) do
+    tex.sprint("{", item.description, "} & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\\\")
+  end
   tex.sprint(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €} \\\\")
   tex.sprint("\\end{tabularx}")
 \end{luacode}
-
-\begin{tabularx}{\textwidth}{>{\columncolor{gray!10}}X>{\columncolor{gray!20}}r>{\columncolor{gray!30}}r>{\columncolor{gray!40}}r>{\columncolor{gray!50}}r>{\columncolor{gray!60}}r}
-   Alpha     & Beta     & Gamma   & X & X & X \\
-   0         & 2        & 4      & X & X & X     \\
-            & 3        & 5      & X & X & X     \\
-\end{tabularx}
 
 % \begin{tabularx}{\textwidth}{Xrrrrr}
 %   \multicolumn{6}{l}{Rechnungsdetails}

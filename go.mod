@@ -1,8 +1,10 @@
 module github.com/kinneko-de/restaurant-document-generate-svc
 
-go 1.20
+go 1.21
 
-require github.com/kinneko-de/protobuf-go v0.1.0
+toolchain go1.21.1
+
+require github.com/kinneko-de/protobuf-go v0.2.0
 
 require (
 	github.com/google/uuid v1.3.0
