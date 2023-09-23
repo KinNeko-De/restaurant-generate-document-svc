@@ -1,11 +1,16 @@
 FROM kinnekode/texlive-luatex:bookworm-slim AS base
 
+RUN apt-get update && apt-get upgrade -y
+
 EXPOSE 3110
+
+ARG USER_UID=1001
+RUN useradd -u ${USER_UID} appuser
+RUN chown -R appuser /texlive
+RUN chmod -R 777 /texlive
+USER ${USER_UID}
 
 WORKDIR /app
 
 COPY /bin/app .
-
-RUN chmod +x /app/app
-
 CMD ["/app/app"]

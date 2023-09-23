@@ -42,7 +42,7 @@ func (generatedFileHandler GeneratedFileHandler) Close() error {
 }
 
 func CreateDirectoryForRun(outputDirectory string) error {
-	mkDirError := os.MkdirAll(outputDirectory, os.ModeExclusive)
+	mkDirError := os.MkdirAll(outputDirectory, 0777)
 	return mkDirError
 }
 
