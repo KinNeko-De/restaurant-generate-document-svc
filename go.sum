@@ -8,6 +8,7 @@ github.com/golang/protobuf v1.5.3 h1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg
 github.com/golang/protobuf v1.5.3/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
+github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5 h1:3IZOAnD058zZllQTZNBioTlrzrBG/IjpiZ133IEtusM=
@@ -16,14 +17,6 @@ github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5 h1:Hy51ABqJ3
 github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.5/go.mod h1:gn/wdjDXrpdTYeIRzi/GWPG/bAJ1z1jjgiov/wRT2fM=
 github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.0.1 h1:OdMGr/TD7UMtN6mRMaX2If/fSBlHRMYh1BCmFB673kI=
 github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.0.1/go.mod h1:4m/A9tVLXmNNgYpM3B4My2BDU5SmveKg1x8dMVs/ZYY=
-github.com/kinneko-de/protobuf-go v0.1.0 h1:nNzdaxq7koyqFhIdVEp1H7jp/1bOm91f2v5OreIX7aA=
-github.com/kinneko-de/protobuf-go v0.1.0/go.mod h1:JHcoxh4O1ZdkDql+GG43oyy8Pa9Wyn910Ov588x62YY=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.1 h1:XfOeqhHbmkgmgeKg3p3HrNc4lYWCsLnwbWGAFeKkusc=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.1/go.mod h1:uHDOGPbAsC+34DVKQGJ1NcgtT19OaZmKP2NZZSPykx8=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.2 h1:J1mqeeB9tzqBOTbJH40PUCyFcf4RgcjQ9BaUA/tosnw=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.2/go.mod h1:uHDOGPbAsC+34DVKQGJ1NcgtT19OaZmKP2NZZSPykx8=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.3 h1:hX8e7FJ1J/raQjWvAs/TLinLvyXziUPbul2nlFfbs1M=
-github.com/kinneko-de/protobuf-go v0.2.0-different-linebreaks.3/go.mod h1:uHDOGPbAsC+34DVKQGJ1NcgtT19OaZmKP2NZZSPykx8=
 github.com/kinneko-de/protobuf-go v0.2.0 h1:QoiNgvAqAZQtpYfRGkGGvrGMDIQXlMUkWy3RvXxEqQw=
 github.com/kinneko-de/protobuf-go v0.2.0/go.mod h1:uHDOGPbAsC+34DVKQGJ1NcgtT19OaZmKP2NZZSPykx8=
 github.com/mattn/go-colorable v0.1.12 h1:jF+Du6AlPIjs2BiUiQlKOX0rt3SujHxPnksPKZbaA40=
