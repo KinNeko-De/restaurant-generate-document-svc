@@ -5,7 +5,17 @@
 \usepackage{array}
 \usepackage{polyglossia}
 \usepackage{luacode}
+\usepackage{colortbl}
+\usepackage{xcolor}
 \setdefaultlanguage{german}
+
+\definecolor{gray!10}{gray}{0.9}
+\definecolor{gray!20}{gray}{0.8}
+\definecolor{gray!30}{gray}{0.7}
+\definecolor{gray!40}{gray}{0.6}
+\definecolor{gray!50}{gray}{0.5}
+\definecolor{gray!60}{gray}{0.4}
+\definecolor{gray}{gray}{0.0}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
 %% Because html converters don't know tabularnewline
@@ -16,6 +26,8 @@
 %% on every request a specific model for the request will be generated
 %% do not try to load model.lua because somewhere is another model.lua that will be loaded
 \directlua{ model = require("./data.lua")}
+
+\setlength{\parindent}{0pt}
 
 \begin{document}
 \begin{minipage}[t]{0.4\columnwidth}%
@@ -30,6 +42,7 @@ Rechnung
 \end{minipage}
 
 \bigskip{}
+\rule{\textwidth}{4pt}\tabularnewline
 
 \begin{minipage}[t]{0.4\columnwidth}
 \directlua{tex.print(model.invoice.recipient.name)}
@@ -42,24 +55,20 @@ Rechnung
 \end{minipage}
 \hfill{}%
 \begin{minipage}[t]{0.4\columnwidth}%
-{Referenznummer XXX}{\par}
-
-{Verkauf durch Verkäufer}{\par}
-
-{\rule[0.5ex]{1\columnwidth}{1pt}}{\par}
-
-{Rechnungsdatum /}\\
-{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}}{\par}%
+{Referenznummer XXX}\tabularnewline
+{Verkauf durch Verkäufer}\tabularnewline
+{\rule[0.5ex]{1\columnwidth}{1pt}}\tabularnewline
+{Rechnungsdatum /}\tabularnewline
+{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}}\tabularnewline%
 \end{minipage}
 
 \vspace{10ex}
 
-Rechnungsdetails
+Rechnungsdetails\tabularnewline
+\rule{\textwidth}{1pt}\tabularnewline
 
-\hfill{}%
-\begin{minipage}[t]{1\columnwidth}%
-    \begin{luacode}
-    tex.print("\\begin{tabular*}{0.99\\columnwidth}{@{\\extracolsep{\\fill}}>{\\raggedright}p{0.3\\columnwidth}rrrrr}")
+\begin{luacode}
+  tex.print("\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}>{\\raggedright\\columncolor{gray!10}}p{0.3\\columnwidth}>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
     tex.print("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Summe}\\tabularnewline")
     for _, item in ipairs(model.invoice.items) do
       tex.sprint("{", item.description, "}", " & ")
@@ -69,10 +78,9 @@ Rechnungsdetails
       tex.sprint("{", item.totalAmount, " €}", " & ")
       tex.print("{", item.sum, " €}", "\\tabularnewline")
     end
-    tex.print("\\hline")
+    tex.print("\\cline{1-6}")
     tex.print(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}\\\\")
     tex.print("\\end{tabular*}")
-    \end{luacode}
-\end{minipage}
+\end{luacode}
 
 \end{document}
