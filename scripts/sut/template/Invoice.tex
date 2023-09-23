@@ -5,6 +5,7 @@
 \usepackage{array}
 \usepackage{polyglossia}
 \usepackage{luacode}
+\usepackage{tabularx}
 \usepackage{colortbl}
 \usepackage{xcolor}
 \setdefaultlanguage{german}
@@ -17,10 +18,6 @@
 \definecolor{gray!60}{gray}{0.4}
 \definecolor{gray}{gray}{0.0}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
-%% Because html converters don't know tabularnewline
-\providecommand{\tabularnewline}{\\}
-
 %% includes the model of the invoice
 %% file is filled with test data
 %% on every request a specific model for the request will be generated
@@ -30,57 +27,85 @@
 \setlength{\parindent}{0pt}
 
 \begin{document}
-\begin{minipage}[t]{0.4\columnwidth}%
+\begin{minipage}[t]{0.65\columnwidth}%
 \begin{flushleft}
-restaurant.think.different
+\huge \textbf{restaurant.think.different}
 \par\end{flushleft}%
 \end{minipage} \hfill{}%
-\begin{minipage}[t]{0.4\columnwidth}%
+\begin{minipage}[t]{0.3\columnwidth}%
 \begin{flushright}
-Rechnung
+\huge \textbf{Rechnung}
 \par\end{flushright}%
 \end{minipage}
 
 \bigskip{}
-\rule{\textwidth}{4pt}\tabularnewline
 
-\begin{minipage}[t]{0.4\columnwidth}
-\directlua{tex.print(model.invoice.recipient.name)}
-
-\directlua{tex.print(model.invoice.recipient.street)}
-
-\directlua{tex.print(model.invoice.recipient.city)}, \directlua{tex.print(model.invoice.recipient.postCode)}
-
-\directlua{tex.print(model.invoice.recipient.country)}
+\begin{minipage}[t]{0.3\columnwidth}
+\directlua{tex.sprint(model.invoice.recipient.name, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.street, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.city, ", ", model.invoice.recipient.postCode, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.country, "\\\\")}
 \end{minipage}
 \hfill{}%
-\begin{minipage}[t]{0.4\columnwidth}%
-{Referenznummer XXX}\tabularnewline
-{Verkauf durch Verkäufer}\tabularnewline
-{\rule[0.5ex]{1\columnwidth}{1pt}}\tabularnewline
-{Rechnungsdatum /}\tabularnewline
-{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}}\tabularnewline%
+\begin{minipage}[t]{0.6\columnwidth}%
+{Referenznummer XXX} \\
+{Verkauf durch Verkäufer} \\
+{\rule[0.5ex]{1\columnwidth}{1pt}} \\
+{Rechnungsdatum /} \\
+{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}} \\
 \end{minipage}
 
 \vspace{10ex}
 
-Rechnungsdetails\tabularnewline
-\rule{\textwidth}{1pt}\tabularnewline
+\small
 
 \begin{luacode}
-  tex.print("\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}>{\\raggedright\\columncolor{gray!10}}p{0.3\\columnwidth}>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
-    tex.print("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Summe}\\tabularnewline")
-    for _, item in ipairs(model.invoice.items) do
-      tex.sprint("{", item.description, "}", " & ")
-      tex.sprint("{", item.quantity, "}", " & ")
-      tex.sprint("{", item.netAmount, " €}", " & ")
-      tex.sprint("{", item.taxation, " \\%}", " & ")
-      tex.sprint("{", item.totalAmount, " €}", " & ")
-      tex.print("{", item.sum, " €}", "\\tabularnewline")
-    end
-    tex.print("\\cline{1-6}")
-    tex.print(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}\\\\")
-    tex.print("\\end{tabular*}")
+  tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\columncolor{gray!10}}X>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
+  tex.sprint(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €} \\\\")
+  tex.sprint("\\end{tabularx}")
 \end{luacode}
+
+\begin{tabularx}{\textwidth}{>{\columncolor{gray!10}}X>{\columncolor{gray!20}}r>{\columncolor{gray!30}}r>{\columncolor{gray!40}}r>{\columncolor{gray!50}}r>{\columncolor{gray!60}}r}
+   Alpha     & Beta     & Gamma   & X & X & X \\
+   0         & 2        & 4      & X & X & X     \\
+            & 3        & 5      & X & X & X     \\
+\end{tabularx}
+
+% \begin{tabularx}{\textwidth}{Xrrrrr}
+%   \multicolumn{6}{l}{Rechnungsdetails}
+%   {Beschreibung} & {Menge} & {Stückpreis} & {USt. \%} & {Stückpreis} & {Zwischensumme}
+%   {Pizza Margherita} & {1} & {4.50} € & {19 \%} & {5.36} € & {5.36} €
+%   \cline{1-6}
+%   & \multicolumn{4}{l}{Gesamtpreis} & {18.77 €}
+% \end{tabularx}
+
+% \begin{luacode}
+%   tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\columncolor{gray!10}}X>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
+%   tex.sprint("\\multicolumn{6}{l}{Rechnungsdetails}\\tabularnewline")
+%   tex.sprint("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Zwischensumme}")
+%   for _, item in ipairs(model.invoice.items) do
+%     tex.sprint(item.description, " & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\tabularnewline")
+%   end
+%   tex.sprint("\\cline{1-6}")
+%   tex.sprint(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}")
+%   tex.sprint("\\end{tabularx}")
+% \end{luacode}
+
+% \begin{luacode}
+%   tex.print("\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}>{\\raggedright\\columncolor{gray!10}}p{0.3\\columnwidth}>{\\columncolor{gray!20}}r>{\\columncolor{gray!30}}r>{\\columncolor{gray!40}}r>{\\columncolor{gray!50}}r>{\\columncolor{gray!60}}r}")
+%   tex.print("\\multicolumn{6}{l}{Rechnungsdetails}\\tabularnewline")
+%   tex.print("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Summe}\\tabularnewline")
+%   for _, item in ipairs(model.invoice.items) do
+%     tex.sprint("{", item.description, "}", " & ")
+%     tex.sprint("{", item.quantity, "}", " & ")
+%     tex.sprint("{", item.netAmount, " €}", " & ")
+%     tex.sprint("{", item.taxation, " \\%}", " & ")
+%     tex.sprint("{", item.totalAmount, " €}", " & ")
+%     tex.print("{", item.sum, " €}", "\\tabularnewline")
+%   end
+%   tex.print("\\cline{1-6}")
+%   tex.print(" & \\multicolumn{4}{l}{Gesamtpreis} & {", 18.77, " €}\\\\")
+%   tex.print("\\end{tabular*}")
+% \end{luacode}
 
 \end{document}
