@@ -85,29 +85,32 @@ func sendChuncks(document GeneratedFile, stream documentServiceApi.DocumentServi
 	for {
 		toRead := chunks[:cap(chunks)]
 		numberOfReadBytes, err := document.Reader.Read(toRead)
-		if err != nil {
-			// If the error is EOF, it means that there is no more data to read from the filem.
-			// In this case, we return nil to indicate that there is no error.
-			if err == io.EOF {
-				return nil
-			}
-			return err
+		// If the error is EOF, it means that there is no more data to read from the file. We can return nil to indicate that there is no error.
+		if err == io.EOF {
+			return nil
 		}
 
-		chunks = chunks[:numberOfReadBytes]
-		err = stream.Send(&documentServiceApi.GeneratePreviewResponse{
-			File: &documentServiceApi.GeneratePreviewResponse_Chunk{
-				Chunk: chunks,
-			},
-		})
 		if err != nil {
 			return err
 		}
-
 		if numberOfReadBytes == 0 {
 			return status.Error(codes.Internal, "Reading file failed. Number of read bytes is 0 but no EndOfFile error returned.")
 		}
+
+		chunks = chunks[:numberOfReadBytes]
+		err = sendReadBytes(chunks, stream)
+		if err != nil {
+			return err
+		}
 	}
+}
+
+func sendReadBytes(chunks []byte, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
+	return stream.Send(&documentServiceApi.GeneratePreviewResponse{
+		File: &documentServiceApi.GeneratePreviewResponse_Chunk{
+			Chunk: chunks,
+		},
+	})
 }
 
 func CloseAndLogError(fileHandler FileHandler, logger zerolog.Logger) {
