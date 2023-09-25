@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git fetch
+git fetch --prune
 
 existingfeaturebranches=$(git branch -r | sed 's/^ *//;s/ *$//' | egrep -v "(^\*|main)")
 
