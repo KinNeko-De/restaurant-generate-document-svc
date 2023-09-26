@@ -273,3 +273,38 @@ func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
 	actualError := server.GeneratePreview(request, mockStream)
 	assert.Nil(t, actualError)
 }
+
+// / This test is not really necessary, but it is here to show that the code is not broken
+func TestGeneratePreview_ReadReturnsZeroBytesButNoError(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	expectedFileSize := uint64(chunkSize + 100)
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(expectedFileSize),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, nil).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
+	documentGenerator = mockGenerator
+
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+
+	assert.NotNil(t, actualError)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
+}
