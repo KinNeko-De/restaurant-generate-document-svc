@@ -36,6 +36,7 @@ require (
 )
 
 require (
+	github.com/go-logr/zerologr v1.2.3
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/rs/zerolog v1.30.0
 	github.com/stretchr/testify v1.8.4

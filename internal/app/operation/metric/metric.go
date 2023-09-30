@@ -6,12 +6,15 @@ import (
 	"os"
 
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
+
+	"github.com/go-logr/zerologr"
 )
 
 const ServiceNameEnv = "OTEL_SERVICE_NAME"
@@ -29,6 +32,9 @@ var (
 )
 
 func InitializeMetrics() error {
+	metricLogger := zerologr.New(&logger.Logger)
+	otel.SetLogger(metricLogger)
+
 	err := readConfig()
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to read metric reader configuration")
@@ -45,8 +51,8 @@ func InitializeMetrics() error {
 	}
 
 	provider = metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(otelReader)),
 		metric.WithReader(metric.NewPeriodicReader(consoleReader)),
+		metric.WithReader(metric.NewPeriodicReader(otelReader)),
 	)
 
 	// I decided to use the service name here as scope because this service is a microservice. one sccope per service approach.
