@@ -26,7 +26,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedMediaType := "application/pdf"
 	expectedExtension := ".pdf"
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockReader := iomocks.NewReader(t)
 	mockGenerator := NewMockDocumentGenerator(t)
 	mockFileHandler := NewMockFileHandler(t)
@@ -101,7 +101,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 
 func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	ctx := context.Background()
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
 	defer closer()
 
@@ -144,7 +144,7 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -165,7 +165,7 @@ func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -195,7 +195,7 @@ func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -227,7 +227,7 @@ func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -256,7 +256,7 @@ func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 }
 
 func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -286,7 +286,7 @@ func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
 func TestGeneratePreview_ReadReturnsZeroBytesButNoError(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
+	initializeMetrics(t)
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	expectedFileSize := uint64(chunkSize + 100)
 	mockReader := iomocks.NewReader(t)
@@ -316,4 +316,10 @@ func TestGeneratePreview_ReadReturnsZeroBytesButNoError(t *testing.T) {
 	require.NotNil(t, actualError)
 	actual := status.Code(actualError)
 	assert.Equal(t, expected, actual)
+}
+
+func initializeMetrics(t *testing.T) {
+	t.Setenv(metric.ServiceNameEnv, "test")
+	t.Setenv(metric.OtelMetricEndpointEnv, "http://localhost:4317")
+	metric.InitializeMetrics()
 }
