@@ -14,7 +14,7 @@
             "env": {
               "APP_ROOT_PATH" : "../../scripts/sut",
               "OTEL_SERVICE_NAME": "restaurant.document-generate-svc",
-              "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "http://otel-collector:4317",
+              "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "otel-collector:4317",
             }
         },
         {
@@ -27,7 +27,7 @@
             "env": {
               "APP_ROOT_PATH" : "../../scripts/sut",
               "OTEL_SERVICE_NAME": "restaurant.document-generate-test",
-              "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "http://iamnotthere:4317",
+              "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "iamnotthere:4317",
             }
         }
     ]
