@@ -23,8 +23,7 @@ var (
 func main() {
 	logger.SetInfoLogLevel()
 	metric.InitializeMetrics()
-	grpcServer := StartGrpcServer()
-	defer grpcServer.GracefulStop()
+	StartGrpcServer()
 }
 
 func StartGrpcServer() *grpc.Server {
@@ -54,8 +53,9 @@ func StartGrpcServer() *grpc.Server {
 	)
 	RegisterAllGrpcServices(grpcServer)
 	if err := grpcServer.Serve(listener); err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to start grpc server.")
+		logger.Logger.Fatal().Err(err).Msg("grpc server was aborted. Graceful shutdown should be implemented.")
 	}
+
 	return grpcServer
 }
 
