@@ -1,6 +1,7 @@
 package document
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -45,18 +46,26 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	err = sendMetadata(document, stream)
 	if err != nil {
-		logger.Err(err).Msg("Sending metadata failed.")
-		return status.Error(codes.Internal, "Sending metadata failed.")
+		return sendError(stream, err, logger, "Sending metadata failed.")
 	}
 
 	err = sendChuncks(document, stream)
 	if err != nil {
-		logger.Err(err).Msg("Sending chunk failed.")
-		return status.Error(codes.Internal, "Sending chunk failed.")
+		return sendError(stream, err, logger, "Sending chunk failed.")
 	}
 
 	logger.Debug().Msgf("Sending finished: %v", time.Since(start))
 	return nil
+}
+
+func sendError(stream documentServiceApi.DocumentService_GeneratePreviewServer, err error, logger zerolog.Logger, messageTemplate string) error {
+	if stream.Context().Err() == context.Canceled {
+		logger.Debug().Msg("Stream canceled.")
+		return nil
+	}
+
+	logger.Err(err).Msg(messageTemplate)
+	return status.Error(codes.Internal, messageTemplate)
 }
 
 func validateRequest(request *documentServiceApi.GeneratePreviewRequest) error {
