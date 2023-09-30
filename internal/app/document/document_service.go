@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -35,7 +35,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	logger.Debug().Msgf("Preprocessing finished: %v", time.Since(start))
 	start = time.Now()
 
-	document, err := GenerateDocument(requestId, request.RequestedDocument, logger)
+	document, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
 		return status.Error(codes.Internal, "Generation of document failed.")
 	}
@@ -55,6 +55,8 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	}
 
 	logger.Debug().Msgf("Sending finished: %v", time.Since(start))
+	metric.DocumentDelivered(document.DocumentType)
+
 	return nil
 }
 

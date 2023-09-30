@@ -34,7 +34,7 @@ func GenerateTestInvoice() {
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	result, err := document.GenerateDocument(requestId, requestedDocument, logger.Logger)
+	result, err := document.GenerateDocument(requestId, requestedDocument)
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Generation of document failed.")
 	}

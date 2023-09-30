@@ -68,6 +68,7 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, documentTyp
 			file:         generatedDocumentFile,
 			tmpDirectory: tmpDirectory,
 		},
+		DocumentType: documentType,
 	}, nil
 }
 

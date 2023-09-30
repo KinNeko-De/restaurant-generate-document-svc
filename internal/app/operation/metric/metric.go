@@ -29,6 +29,7 @@ var (
 	documentRequested api.Int64Counter
 	documentGenerated api.Int64Counter
 	documentFailed    api.Int64Counter
+	documentDelivered api.Int64Counter
 )
 
 func InitializeMetrics() error {
@@ -73,6 +74,11 @@ func InitializeMetrics() error {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-failed'")
 	}
 
+	documentFailed, err = meter.Int64Counter("document-delivered", api.WithUnit("document"), api.WithDescription("Number of documents that was delivered fully to the client"))
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-delivered'")
+	}
+
 	return nil
 }
 
@@ -86,6 +92,10 @@ func DocumentGenerated(documentType string) {
 
 func DocumentFailed(documentType string) {
 	documentFailed.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
+}
+
+func DocumentDelivered(documentType string) {
+	documentDelivered.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
 }
 
 func ForceFlush() {
