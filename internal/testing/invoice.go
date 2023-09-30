@@ -34,7 +34,7 @@ func GenerateTestInvoice() {
 
 	const chunkSize = 1000
 	chunks := make([]byte, 0, chunkSize)
-	result, err := document.DocumentGeneratorLuatex{}.GenerateDocument(requestId, requestedDocument)
+	result, err := document.GenerateDocument(requestId, requestedDocument, logger.Logger)
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Generation of document failed.")
 	}

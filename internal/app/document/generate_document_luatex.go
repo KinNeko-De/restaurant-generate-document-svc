@@ -12,7 +12,6 @@ import (
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
 	protoluaextension "github.com/kinneko-de/restaurant-document-generate-svc/internal/app/encoding/protolua"
 
-	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -21,7 +20,7 @@ import (
 type DocumentGeneratorLuatex struct {
 }
 
-func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error) {
+func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (result GeneratedFile, err error) {
 	appRootDirectory := app.Config.RootPath
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
@@ -31,18 +30,17 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *re
 
 	CreateDirectoryForRun(outputDirectory)
 
-	rootObject, message := getTemplateName(command)
 	documentInputData, err := convertToLuaTable(message)
 	if err != nil {
 		return result, err
 	}
 
-	templateFile, err := copyLuatexTemplate(luatexTemplateDirectory, rootObject, tmpDirectory)
+	templateFile, err := copyLuatexTemplate(luatexTemplateDirectory, documentType, tmpDirectory)
 	if err != nil {
 		return result, err
 	}
 
-	if err := createDocumentInputData(rootObject, tmpDirectory, documentInputData); err != nil {
+	if err := createDocumentInputData(documentType, tmpDirectory, documentInputData); err != nil {
 		return result, err
 	}
 
@@ -53,7 +51,7 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *re
 		return result, err
 	}
 
-	generatedDocumentFile, reader, err := createAccessToOutputfile(outputDirectory, rootObject)
+	generatedDocumentFile, reader, err := createAccessToOutputfile(outputDirectory, documentType)
 	if err != nil {
 		return result, err
 	}
@@ -73,8 +71,8 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, command *re
 	}, nil
 }
 
-func createAccessToOutputfile(outputDirectory string, rootObject string) (*os.File, *bufio.Reader, error) {
-	generatedDocument := path.Join(outputDirectory, rootObject+".pdf")
+func createAccessToOutputfile(outputDirectory string, documentType string) (*os.File, *bufio.Reader, error) {
+	generatedDocument := path.Join(outputDirectory, documentType+".pdf")
 	generatedDocumentFile, err := os.Open(generatedDocument)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error open generated document %v: %v", generatedDocument, err)
@@ -94,16 +92,6 @@ func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory s
 	return nil
 }
 
-func getTemplateName(command *restaurantDocumentApi.RequestedDocument) (string, proto.Message) {
-	ref := command.ProtoReflect()
-	refDescriptor := ref.Descriptor()
-	setValue := ref.WhichOneof(refDescriptor.Oneofs().ByName("type"))
-	fieldName := setValue.Message().Name()
-	message := command.ProtoReflect().Get(setValue).Message().Interface()
-	rootObject := string(fieldName)
-	return rootObject, message
-}
-
 func copyLuatexTemplate(documentDirectory string, template string, tmpDirectory string) (string, error) {
 	templateFile := template + ".tex"
 	_, texErr := copyFile(path.Join(documentDirectory, templateFile), path.Join(tmpDirectory, templateFile))
@@ -113,7 +101,7 @@ func copyLuatexTemplate(documentDirectory string, template string, tmpDirectory 
 	return templateFile, nil
 }
 
-func createDocumentInputData(rootObject string, tmpDirectory string, inputData []byte) error {
+func createDocumentInputData(documentType string, tmpDirectory string, inputData []byte) error {
 	inputDataFile := "data.lua"
 	file, err := os.Create(path.Join(tmpDirectory, inputDataFile))
 	if err != nil {
@@ -122,7 +110,7 @@ func createDocumentInputData(rootObject string, tmpDirectory string, inputData [
 	file.WriteString("local ")
 	file.Write(inputData)
 	// TODO change protobuf-go to user lower names
-	tableAssign := "return {" + strings.ToLower(rootObject) + " = " + rootObject + " }"
+	tableAssign := "return {" + strings.ToLower(documentType) + " = " + documentType + " }"
 	file.WriteString(tableAssign)
 	if err := file.Close(); err != nil {
 		return err

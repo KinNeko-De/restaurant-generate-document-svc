@@ -34,7 +34,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	logger.Debug().Msgf("Preprocessing finished: %v", time.Since(start))
 	start = time.Now()
 
-	document, err := documentGenerator.GenerateDocument(requestId, request.RequestedDocument)
+	document, err := GenerateDocument(requestId, request.RequestedDocument, logger)
 	if err != nil {
 		return status.Error(codes.Internal, "Generation of document failed.")
 	}
