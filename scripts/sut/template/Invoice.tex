@@ -5,11 +5,8 @@
 \usepackage{array}
 \usepackage{polyglossia}
 \usepackage{luacode}
+\usepackage{tabularx}
 \setdefaultlanguage{german}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
-%% Because html converters don't know tabularnewline
-\providecommand{\tabularnewline}{\\}
 
 %% includes the model of the invoice
 %% file is filled with test data
@@ -17,69 +14,51 @@
 %% do not try to load model.lua because somewhere is another model.lua that will be loaded
 \directlua{ model = require("./data.lua")}
 
+\setlength{\parindent}{0pt}
+
 \begin{document}
-\begin{minipage}[t]{0.4\columnwidth}%
+\begin{minipage}[t]{0.65\columnwidth}%
 \begin{flushleft}
-restaurant.think.different
+\huge \textbf{restaurant.think.different}
 \par\end{flushleft}%
 \end{minipage} \hfill{}%
-\begin{minipage}[t]{0.4\columnwidth}%
+\begin{minipage}[t]{0.3\columnwidth}%
 \begin{flushright}
-Rechnung
+\huge \textbf{Rechnung}
 \par\end{flushright}%
 \end{minipage}
 
 \bigskip{}
 
-\begin{minipage}[t]{0.4\columnwidth}
-\directlua{tex.print(model.invoice.recipient.name)}
-
-\directlua{tex.print(model.invoice.recipient.street)}
-
-\directlua{tex.print(model.invoice.recipient.city)}, \directlua{tex.print(model.invoice.recipient.postCode)}
-
-\directlua{tex.print(model.invoice.recipient.country)}
+\begin{minipage}[t]{0.3\columnwidth}
+\directlua{tex.sprint(model.invoice.recipient.name, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.street, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.city, ", ", model.invoice.recipient.postCode, "\\\\")}
+\directlua{tex.sprint(model.invoice.recipient.country, "\\\\")}
 \end{minipage}
 \hfill{}%
-\begin{minipage}[t]{0.4\columnwidth}%
-{Referenznummer XXX}{\par}
-
-{Verkauf durch Verkäufer}{\par}
-
-{\rule[0.5ex]{1\columnwidth}{1pt}}{\par}
-
-{Rechnungsdatum /}\\
-{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}}{\par}%
+\begin{minipage}[t]{0.6\columnwidth}%
+{Referenznummer XXX} \\
+{Verkauf durch Verkäufer} \\
+{\rule[0.5ex]{1\columnwidth}{1pt}} \\
+{Rechnungsdatum /} \\
+{Lieferdatum \luaexec{tex.sprint(os.date("\%d.\%m.\%Y", model.invoice.deliveredOn.seconds))}} \\
 \end{minipage}
 
 \vspace{10ex}
 
-Rechnungsdetails
+\small
 
-\hfill{}%
-\begin{minipage}[t]{1\columnwidth}%
-    \begin{luacode}
-    tex.print("\\begin{tabular*}{0.99\\columnwidth}{@{\\extracolsep{\\fill}}>{\\raggedright}p{0.3\\columnwidth}rrrrr}")
-    tex.print("{Beschreibung} & {Menge} & {Stückpreis} & {USt. \\%} & {Stückpreis} & {Summe}\\tabularnewline")
-    for _, item in ipairs(model.invoice.items) do
-      tex.sprint("{", item.description, "}", " & ")
-      tex.sprint("{", item.quantity, "}", " & ")
-      tex.sprint("{", item.netAmount, " €}", " & ")
-      tex.sprint("{", item.taxation, " \\%}", " & ")
-      tex.sprint("{", item.totalAmount, " €}", " & ")
-      tex.print("{", item.sum, " €}", "\\tabularnewline")
-    end
-    tex.print("\\end{tabular*}")
-    \end{luacode}
-\end{minipage}
+\begin{luacode}
+  tex.sprint("\\begin{tabularx}{\\textwidth}{>{\\raggedright}X>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}>{\\raggedleft\\arraybackslash}p{0.1\\textwidth}}")
+  tex.sprint("\\multicolumn{6}{l}{\\normalsize Rechnungsdetails} \\\\")
+  tex.sprint("{\\footnotesize Beschreibung} & {\\footnotesize Menge} & {\\footnotesize Stückpreis ohne USt.} & {\\footnotesize USt. \\%} & {\\footnotesize Stückpreis inkl. USt.} & {\\footnotesize Zwischensumme} \\\\")
+  for _, item in ipairs(model.invoice.items) do
+    tex.sprint("{", item.description, "} & {", item.quantity, "} & {", item.netAmount, "} € & {", item.taxation, "\\%} & {", item.totalAmount, " €} & {", item.sum, " €} \\\\")
+  end
+  tex.sprint(" & \\multicolumn{4}{l}{\\normalsize Gesamtpreis} & {\\normalsize ", 18.77, " €} \\\\")
+  tex.sprint("\\end{tabularx}")
+\end{luacode}
 
-\hfill{}%
-\begin{minipage}[t]{0.3\columnwidth}%
-Gesamtpreis%
-\end{minipage}%
-\noindent\begin{minipage}[t]{0.1\columnwidth}%
-\begin{flushright}
-18,77 €
-\end{flushright}%
-\end{minipage}
+
 \end{document}

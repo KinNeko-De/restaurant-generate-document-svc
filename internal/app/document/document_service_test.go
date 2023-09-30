@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
 	documentfixture "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document"
 	documentmocks "github.com/kinneko-de/restaurant-document-generate-svc/internal/testing/document/mocks"
 
@@ -26,7 +25,6 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 	expectedMediaType := "application/pdf"
 	expectedExtension := ".pdf"
 
-	metric.InitializeMetrics()
 	mockReader := iomocks.NewReader(t)
 	mockGenerator := NewMockDocumentGenerator(t)
 	mockFileHandler := NewMockFileHandler(t)
@@ -35,7 +33,7 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	mockReader.EXPECT().Read(mock.Anything).Return(chunkSize, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(100, nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
@@ -101,7 +99,6 @@ func TestGeneratePreview_DocumentIsGenerated(t *testing.T) {
 
 func TestGeneratePreview_InvalidRequests(t *testing.T) {
 	ctx := context.Background()
-	metric.InitializeMetrics()
 	client, closer := documentfixture.CreateDocumentServiceClient(ctx, &DocumentServiceServer{})
 	defer closer()
 
@@ -144,7 +141,6 @@ func TestGeneratePreview_InvalidRequests(t *testing.T) {
 func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -152,7 +148,7 @@ func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 		},
 	}
 	mockGenerator := NewMockDocumentGenerator(t)
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(GeneratedFile{}, errors.New("TestError"))
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(GeneratedFile{}, errors.New("TestError"))
 	documentGenerator = mockGenerator
 
 	server := DocumentServiceServer{}
@@ -165,7 +161,6 @@ func TestGeneratePreview_GenerateDocumentFailed(t *testing.T) {
 func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -180,7 +175,7 @@ func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	mockStream.EXPECT().Send(mock.Anything).Return(errors.New("Network error")).Once()
 	mockFileHandler.EXPECT().Close().Return(nil).Once()
 	documentGenerator = mockGenerator
@@ -195,7 +190,6 @@ func TestGeneratePreview_SendMetadataFailed(t *testing.T) {
 func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -210,7 +204,7 @@ func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	mockReader.EXPECT().Read(mock.Anything).Return(1, nil).Once()
 	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
 	mockStream.EXPECT().Send(mock.Anything).Return(errors.New("Network error")).Once()
@@ -227,7 +221,6 @@ func TestGeneratePreview_SendChunkFailed(t *testing.T) {
 func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 	expected := codes.Internal
 
-	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -242,7 +235,7 @@ func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, errors.New("Reading file failed")).Once()
 	mockFileHandler.EXPECT().Close().Return(nil).Once()
@@ -256,7 +249,6 @@ func TestGeneratePreview_ReadingFileFailed(t *testing.T) {
 }
 
 func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
-	metric.InitializeMetrics()
 	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
 	request := &documentServiceApi.GeneratePreviewRequest{
 		RequestedDocument: &documentServiceApi.RequestedDocument{
@@ -271,7 +263,7 @@ func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
 		Reader:  bufio.NewReader(mockReader),
 		Handler: mockFileHandler,
 	}
-	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
 	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
 	mockReader.EXPECT().Read(mock.Anything).Return(0, io.EOF).Once()
 	mockFileHandler.EXPECT().Close().Return(errors.New("Closing file failed.")).Once()
@@ -280,4 +272,39 @@ func TestGeneratePreview_CLosingFileFailed_ErrorIsIgnored(t *testing.T) {
 	server := DocumentServiceServer{}
 	actualError := server.GeneratePreview(request, mockStream)
 	assert.Nil(t, actualError)
+}
+
+// / This test is not really necessary, but it is here to show that the code is not broken
+func TestGeneratePreview_ReadReturnsZeroBytesButNoError(t *testing.T) {
+	expected := codes.Internal
+
+	mockStream := documentmocks.NewDocumentService_GeneratePreviewServer(t)
+	expectedFileSize := uint64(chunkSize + 100)
+	mockReader := iomocks.NewReader(t)
+	mockGenerator := NewMockDocumentGenerator(t)
+	mockFileHandler := NewMockFileHandler(t)
+	generatedFile := GeneratedFile{
+		Size:    int64(expectedFileSize),
+		Reader:  bufio.NewReader(mockReader),
+		Handler: mockFileHandler,
+	}
+	mockGenerator.EXPECT().GenerateDocument(mock.Anything, mock.Anything).Return(generatedFile, nil)
+	mockStream.EXPECT().Send(mock.Anything).Return(nil).Once()
+	mockReader.EXPECT().Read(mock.Anything).Return(0, nil).Once()
+	mockFileHandler.EXPECT().Close().Return(nil).Once()
+	documentGenerator = mockGenerator
+
+	request := &documentServiceApi.GeneratePreviewRequest{
+		RequestedDocument: &documentServiceApi.RequestedDocument{
+			Type: &documentServiceApi.RequestedDocument_Invoice{},
+		},
+	}
+
+	server := DocumentServiceServer{}
+	actualError := server.GeneratePreview(request, mockStream)
+
+	assert.NotNil(t, actualError)
+	require.NotNil(t, actualError)
+	actual := status.Code(actualError)
+	assert.Equal(t, expected, actual)
 }

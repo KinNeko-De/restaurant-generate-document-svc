@@ -7,43 +7,15 @@ import (
 
 	"github.com/google/uuid"
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
-	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/proto"
 )
 
 type DocumentGenerator interface {
-	GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (result GeneratedFile, err error)
+	GenerateDocument(requestId uuid.UUID, command *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error)
 }
 
 var (
 	documentGenerator DocumentGenerator = DocumentGeneratorLuatex{}
 )
-
-func GenerateDocument(requestId uuid.UUID, requestedDocument *restaurantDocumentApi.RequestedDocument, logger zerolog.Logger) (result GeneratedFile, err error) {
-	documentType, message := getTemplateName(requestedDocument)
-	metric.DocumentRequested(documentType)
-
-	generatedFile, err := documentGenerator.GenerateDocument(requestId, documentType, message)
-	if err == nil {
-		metric.DocumentGenerated(documentType)
-	} else {
-		logger.Err(err).Msg("Generation of document failed.")
-		metric.DocumentFailed(documentType)
-	}
-
-	return generatedFile, err
-}
-
-func getTemplateName(command *restaurantDocumentApi.RequestedDocument) (string, proto.Message) {
-	ref := command.ProtoReflect()
-	refDescriptor := ref.Descriptor()
-	setValue := ref.WhichOneof(refDescriptor.Oneofs().ByName("type"))
-	fieldName := setValue.Message().Name()
-	message := command.ProtoReflect().Get(setValue).Message().Interface()
-	rootObject := string(fieldName)
-	return rootObject, message
-}
 
 type GeneratedFile struct {
 	Reader  *bufio.Reader
@@ -70,7 +42,7 @@ func (generatedFileHandler GeneratedFileHandler) Close() error {
 }
 
 func CreateDirectoryForRun(outputDirectory string) error {
-	mkDirError := os.MkdirAll(outputDirectory, os.ModeExclusive)
+	mkDirError := os.MkdirAll(outputDirectory, os.FileMode(0770))
 	return mkDirError
 }
 
