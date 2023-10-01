@@ -74,7 +74,7 @@ func InitializeMetrics() error {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-failed'")
 	}
 
-	documentFailed, err = meter.Int64Counter("document-delivered", api.WithUnit("document"), api.WithDescription("Number of documents that was delivered fully to the client"))
+	documentDelivered, err = meter.Int64Counter("document-delivered", api.WithUnit("document"), api.WithDescription("Number of documents that was delivered fully to the client"))
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-delivered'")
 	}
