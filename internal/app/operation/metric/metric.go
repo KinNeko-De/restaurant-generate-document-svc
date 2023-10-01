@@ -83,6 +83,7 @@ func createProvider(ressource *resource.Resource) *metric.MeterProvider {
 	return provider
 }
 
+// TODO make name more according to name in https://github.com/MrAlias/opentelemetry-go-contrib/blob/main/instrumentation/net/http/otelhttp/test/handler_test.go "		Name: "http.server.request_content_length" and https://opentelemetry.io/docs/specs/otel/metrics/semantic_conventions/
 func createMetrics(provider *metric.MeterProvider) {
 	// I decided to use the service name here as scope because this service is a microservice. one sccope per service approach.
 	meter = provider.Meter(config.OtelServiceName, api.WithInstrumentationVersion(version))
