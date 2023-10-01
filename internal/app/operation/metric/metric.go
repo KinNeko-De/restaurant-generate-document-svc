@@ -9,10 +9,13 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/kinneko-de/restaurant-document-generate-svc/build"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 
 	"github.com/go-logr/zerologr"
 )
@@ -41,25 +44,52 @@ func InitializeMetrics() error {
 		logger.Logger.Fatal().Err(err).Msg("Failed to read metric reader configuration")
 	}
 
+	ressource := createRessource()
+	provider := createProvider(ressource)
+	createMetrics(provider)
+
+	return nil
+}
+
+func createRessource() *resource.Resource {
+	res, err := resource.Merge(resource.Default(),
+		resource.NewWithAttributes(semconv.SchemaURL,
+			semconv.ServiceNameKey.String(config.OtelServiceName),
+			semconv.ServiceVersionKey.String(build.Version),
+		))
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msg("Failed to create ressource for metric reader")
+	}
+
+	return res
+}
+
+func createProvider(ressource *resource.Resource) *metric.MeterProvider {
 	otelReader, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint(config.OtelMetricEndpoint))
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to otel collector")
 	}
-
 	consoleReader, err := stdoutmetric.New()
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to console")
 	}
 
 	provider = metric.NewMeterProvider(
+		metric.WithResource(ressource),
 		metric.WithReader(metric.NewPeriodicReader(consoleReader)),
 		metric.WithReader(metric.NewPeriodicReader(otelReader)),
 	)
+	otel.SetMeterProvider(provider)
+	return provider
+}
 
+func createMetrics(provider *metric.MeterProvider) {
 	// I decided to use the service name here as scope because this service is a microservice. one sccope per service approach.
 	meter = provider.Meter(config.OtelServiceName, api.WithInstrumentationVersion(version))
 
-	documentRequested, err = meter.Int64Counter("document-requested", api.WithUnit("document"), api.WithDescription("Number of documents requested"))
+	var err error
+
+	documentRequested, err = meter.Int64Counter("document-requested", api.WithUnit("document"), api.WithDescription("Number of requested documents"))
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-requested'")
 	}
@@ -78,8 +108,6 @@ func InitializeMetrics() error {
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-delivered'")
 	}
-
-	return nil
 }
 
 func DocumentRequested(documentType string) {
