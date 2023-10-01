@@ -35,7 +35,7 @@ func StartGrpcServer() *grpc.Server {
 
 	// Handling of panic to prevent crash from example nil pointer exceptions
 	logPanic = func(p any) (err error) {
-		log.Warn().Any("method", p).Err(err).Msg("Recovered from panic.")
+		log.Error().Any("method", p).Err(err).Msg("Recovered from panic.")
 		return status.Errorf(codes.Internal, "Internal server error occured.")
 	}
 
