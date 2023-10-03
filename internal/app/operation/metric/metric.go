@@ -67,11 +67,16 @@ func initializeOpenTelemetry() (*metric.MeterProvider, error) {
 	if err != nil {
 		return nil, err
 	}
-	readers := createReader()
+
+	readers, err := createReader()
+	if err != nil {
+		return nil, err
+	}
+
 	views := createViews()
 	provider := createProvider(ressource, readers, views)
-	createMetrics(provider)
-	return provider, nil
+	metricError := createMetrics(provider)
+	return provider, metricError
 }
 
 func createRessource() (*resource.Resource, error) {
@@ -81,7 +86,7 @@ func createRessource() (*resource.Resource, error) {
 			semconv.ServiceVersionKey.String(build.Version),
 		))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create ressource for metric reader: %w", err)
+		return nil, fmt.Errorf("failed to create ressource for metric reader: %w", err)
 	}
 
 	return res, nil
@@ -104,20 +109,20 @@ func createViews() []metric.View {
 	return []metric.View{view}
 }
 
-func createReader() []metric.Reader {
+func createReader() ([]metric.Reader, error) {
 	otelGrpcExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint(config.OtelMetricEndpoint))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to otel collector")
+		return nil, fmt.Errorf("failed to initialize metric reader to otel collector: %w", err)
 	}
 	otelReader := metric.NewPeriodicReader(otelGrpcExporter)
 
 	consoleExporter, err := stdoutmetric.New()
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to console")
+		return nil, fmt.Errorf("failed to initialize metric reader to console: %w", err)
 	}
 	consoleReader := metric.NewPeriodicReader(consoleExporter)
 
-	return []metric.Reader{otelReader, consoleReader}
+	return []metric.Reader{otelReader, consoleReader}, nil
 }
 
 func createProvider(ressource *resource.Resource, readers []metric.Reader, views []metric.View) *metric.MeterProvider {
@@ -137,37 +142,36 @@ func createProvider(ressource *resource.Resource, readers []metric.Reader, views
 }
 
 // https://opentelemetry.io/docs/specs/otel/metrics/semantic_conventions/
-func createMetrics(provider *metric.MeterProvider) {
+func createMetrics(provider *metric.MeterProvider) error {
 	// I decided to use the service name here as scope because this service is a microservice. one sccope per service approach.
 	meter = provider.Meter(config.OtelServiceName, api.WithInstrumentationVersion(version))
 
 	var err error
-
-	errorTemplate := "Failed to initialize metric '%v'"
+	errorTemplate := "failed to initialize metric '%v' %w"
 	previewRequested, err = meter.Int64Counter(
 		MetricNameDocumentPreviewRequested,
 		api.WithDescription(MetricDescriptionDocumentPreviewRequested))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentPreviewRequested)
+		return fmt.Errorf(errorTemplate, MetricNameDocumentPreviewRequested, err)
 	}
 	previewDelivered, err = meter.Int64Counter(
 		MetricNameDocumentPreviewDelivered,
 		api.WithDescription(MetricDescriptionDocumentPreviewDelivered))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentPreviewDelivered)
+		return fmt.Errorf(errorTemplate, MetricNameDocumentPreviewDelivered, err)
 	}
 
 	documentGenerateSuccessful, err = meter.Int64Counter(
 		MetricNameDocumentGenerateSuccessful,
 		api.WithDescription(MetricDescriptionDocumentGenerateSuccessful))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateSuccessful)
+		return fmt.Errorf(errorTemplate, MetricNameDocumentGenerateSuccessful, err)
 	}
 	documentGenerateFailed, err = meter.Int64Counter(
 		MetricNameDocumentGenerateFailed,
 		api.WithDescription(MetricDescriptionDocumentGenerateFailed))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateFailed)
+		return fmt.Errorf(errorTemplate, MetricNameDocumentGenerateFailed, err)
 	}
 
 	documentGenerateDuration, err = meter.Float64Histogram(
@@ -175,8 +179,10 @@ func createMetrics(provider *metric.MeterProvider) {
 		api.WithDescription(MetricDescriptionDocumentGenerateDuration),
 		api.WithUnit("ms"))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateDuration)
+		return fmt.Errorf(errorTemplate, MetricNameDocumentGenerateDuration, err)
 	}
+
+	return nil
 }
 
 func PreviewRequested() {
