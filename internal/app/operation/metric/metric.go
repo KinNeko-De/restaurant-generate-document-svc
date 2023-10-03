@@ -58,30 +58,33 @@ func InitializeMetrics() (*metric.MeterProvider, error) {
 		return nil, err
 	}
 
-	provider := initializeOpenTelemetry()
-	return provider, nil
+	provider, err := initializeOpenTelemetry()
+	return provider, err
 }
 
-func initializeOpenTelemetry() *metric.MeterProvider {
-	ressource := createRessource()
+func initializeOpenTelemetry() (*metric.MeterProvider, error) {
+	ressource, err := createRessource()
+	if err != nil {
+		return nil, err
+	}
 	readers := createReader()
 	views := createViews()
 	provider := createProvider(ressource, readers, views)
 	createMetrics(provider)
-	return provider
+	return provider, nil
 }
 
-func createRessource() *resource.Resource {
+func createRessource() (*resource.Resource, error) {
 	res, err := resource.Merge(resource.Default(),
 		resource.NewWithAttributes(semconv.SchemaURL,
 			semconv.ServiceNameKey.String(config.OtelServiceName),
 			semconv.ServiceVersionKey.String(build.Version),
 		))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to create ressource for metric reader")
+		return nil, fmt.Errorf("Failed to create ressource for metric reader: %w", err)
 	}
 
-	return res
+	return res, nil
 }
 
 func createViews() []metric.View {

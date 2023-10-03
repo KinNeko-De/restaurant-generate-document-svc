@@ -182,7 +182,7 @@ func TestPreviewRequested_DocumentGenerated_Failed(t *testing.T) {
 func mockMetric() (*metric.ManualReader, *metric.MeterProvider) {
 	reader := metric.NewManualReader()
 
-	ressource := createRessource()
+	ressource, _ := createRessource()
 	views := createViews()
 	provider := createProvider(ressource, []metric.Reader{reader}, views)
 	createMetrics(provider)
