@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 
 	"github.com/rs/zerolog/log"
@@ -22,7 +23,13 @@ var (
 
 func main() {
 	logger.SetInfoLogLevel()
-	metric.InitializeMetrics()
+
+	provider, err := metric.InitializeMetrics()
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msg("failed to initialize metrics")
+	}
+	defer provider.Shutdown(context.Background())
+
 	StartGrpcServer()
 }
 
