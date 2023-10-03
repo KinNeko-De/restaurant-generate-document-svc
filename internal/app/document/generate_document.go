@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
@@ -21,14 +22,10 @@ var (
 
 func GenerateDocument(requestId uuid.UUID, requestedDocument *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error) {
 	documentType, message := parseRequest(requestedDocument)
-	metric.DocumentRequested(documentType)
 
+	start := time.Now()
 	generatedFile, err := documentGenerator.GenerateDocument(requestId, documentType, message)
-	if err == nil {
-		metric.DocumentGenerated(documentType)
-	} else {
-		metric.DocumentFailed(documentType)
-	}
+	metric.DocumentGenerated(documentType, time.Since(start), err)
 
 	return generatedFile, err
 }

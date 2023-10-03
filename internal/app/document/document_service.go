@@ -3,7 +3,6 @@ package document
 import (
 	"context"
 	"io"
-	"time"
 
 	"github.com/google/uuid"
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
@@ -22,8 +21,6 @@ type DocumentServiceServer struct {
 }
 
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
-	start := time.Now()
-
 	err := validateRequest(request)
 	if err != nil {
 		return err
@@ -31,9 +28,7 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 
 	requestId := uuid.New()
 	logger := logger.Logger.With().Str("requestId", requestId.String()).Logger()
-
-	logger.Debug().Msgf("Preprocessing finished: %v", time.Since(start))
-	start = time.Now()
+	metric.PreviewRequested()
 
 	document, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
@@ -41,22 +36,16 @@ func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.Gene
 	}
 	defer CloseAndLogError(document.Handler, logger)
 
-	logger.Debug().Msgf("Document generation finished: %v", time.Since(start))
-	start = time.Now()
-
 	err = sendMetadata(document, stream)
 	if err != nil {
 		return sendError(stream, err, logger, "Sending metadata failed.")
 	}
-
 	err = sendChuncks(document, stream)
 	if err != nil {
 		return sendError(stream, err, logger, "Sending chunk failed.")
 	}
 
-	logger.Debug().Msgf("Sending finished: %v", time.Since(start))
-	metric.DocumentDelivered(document.DocumentType)
-
+	metric.PreviewDelivered()
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
 	"go.opentelemetry.io/otel"
@@ -23,32 +24,51 @@ import (
 const ServiceNameEnv = "OTEL_SERVICE_NAME"
 const OtelMetricEndpointEnv = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
 
+const MetricNameDocumentPreviewRequested = "restaurant.documents.preview.requested"
+const MetricDescriptionDocumentPreviewRequested = "Sum of requested document previews"
+const MetricNameDocumentPreviewDelivered = "restaurant.documents.preview.delivered"
+const MetricDescriptionDocumentPreviewDelivered = "Sum of document previews that was delivered fully to the client"
+const MetricNameDocumentGenerateSuccessful = "restaurant.documents.generate.successful"
+const MetricDescriptionDocumentGenerateSuccessful = "Sum of documents that were generated successfully"
+const MetricNameDocumentGenerateFailed = "restaurant.documents.generate.failed"
+const MetricDescriptionDocumentGenerateFailed = "Sum of documents that failed to generate due to an error"
+const MetricNameDocumentGenerateDuration = "restaurant.documents.generate.duration" // "Duration of document generation" Unit: "ms" Histogram
+const MetricDescriptionDocumentGenerateDuration = "The duration of the document generation"
+const MetricAttributeDocumentType = "document_type"
+
 var (
-	config            otelConfig
-	version           = "0.1.0"
-	ctx               = context.Background()
-	provider          *metric.MeterProvider
-	meter             api.Meter
-	documentRequested api.Int64Counter
-	documentGenerated api.Int64Counter
-	documentFailed    api.Int64Counter
-	documentDelivered api.Int64Counter
+	config                     otelConfig
+	version                    = "0.2.0"
+	ctx                        = context.Background()
+	provider                   *metric.MeterProvider
+	meter                      api.Meter
+	previewRequested           api.Int64Counter
+	previewDelivered           api.Int64Counter
+	documentGenerateSuccessful api.Int64Counter
+	documentGenerateFailed     api.Int64Counter
+	documentGenerateDuration   api.Float64Histogram
 )
 
-func InitializeMetrics() error {
+func InitializeMetrics() (*metric.MeterProvider, error) {
 	metricLogger := zerologr.New(&logger.Logger)
 	otel.SetLogger(metricLogger)
 
 	err := readConfig()
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to read metric reader configuration")
+		return nil, err
 	}
 
-	ressource := createRessource()
-	provider := createProvider(ressource)
-	createMetrics(provider)
+	provider := initializeOpenTelemetry()
+	return provider, nil
+}
 
-	return nil
+func initializeOpenTelemetry() *metric.MeterProvider {
+	ressource := createRessource()
+	readers := createReader()
+	views := createViews()
+	provider := createProvider(ressource, readers, views)
+	createMetrics(provider)
+	return provider
 }
 
 func createRessource() *resource.Resource {
@@ -64,67 +84,113 @@ func createRessource() *resource.Resource {
 	return res
 }
 
-func createProvider(ressource *resource.Resource) *metric.MeterProvider {
-	otelReader, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint(config.OtelMetricEndpoint))
+func createViews() []metric.View {
+	view := metric.NewView(
+		metric.Instrument{
+			Name: MetricNameDocumentGenerateDuration,
+			Kind: metric.InstrumentKindHistogram,
+		},
+		metric.Stream{
+			Aggregation: metric.AggregationExplicitBucketHistogram{
+				NoMinMax:   true,
+				Boundaries: []float64{1000, 4000, 7000, 10000, 20000},
+			},
+		},
+	)
+
+	return []metric.View{view}
+}
+
+func createReader() []metric.Reader {
+	otelGrpcExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure(), otlpmetricgrpc.WithEndpoint(config.OtelMetricEndpoint))
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to otel collector")
 	}
-	consoleReader, err := stdoutmetric.New()
+	otelReader := metric.NewPeriodicReader(otelGrpcExporter)
+
+	consoleExporter, err := stdoutmetric.New()
 	if err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric reader to console")
 	}
+	consoleReader := metric.NewPeriodicReader(consoleExporter)
+
+	return []metric.Reader{otelReader, consoleReader}
+}
+
+func createProvider(ressource *resource.Resource, readers []metric.Reader, views []metric.View) *metric.MeterProvider {
+	options := []metric.Option{
+		metric.WithResource(ressource),
+		metric.WithView(views...),
+	}
+	for _, reader := range readers {
+		options = append(options, metric.WithReader(reader))
+	}
 
 	provider = metric.NewMeterProvider(
-		metric.WithResource(ressource),
-		metric.WithReader(metric.NewPeriodicReader(consoleReader)),
-		metric.WithReader(metric.NewPeriodicReader(otelReader)),
+		options...,
 	)
 	otel.SetMeterProvider(provider)
 	return provider
 }
 
-// TODO make name more according to name in https://github.com/MrAlias/opentelemetry-go-contrib/blob/main/instrumentation/net/http/otelhttp/test/handler_test.go "		Name: "http.server.request_content_length" and https://opentelemetry.io/docs/specs/otel/metrics/semantic_conventions/
+// https://opentelemetry.io/docs/specs/otel/metrics/semantic_conventions/
 func createMetrics(provider *metric.MeterProvider) {
 	// I decided to use the service name here as scope because this service is a microservice. one sccope per service approach.
 	meter = provider.Meter(config.OtelServiceName, api.WithInstrumentationVersion(version))
 
 	var err error
 
-	documentRequested, err = meter.Int64Counter("document-requested", api.WithUnit("document"), api.WithDescription("Number of requested documents"))
+	errorTemplate := "Failed to initialize metric '%v'"
+	previewRequested, err = meter.Int64Counter(
+		MetricNameDocumentPreviewRequested,
+		api.WithDescription(MetricDescriptionDocumentPreviewRequested))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-requested'")
+		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentPreviewRequested)
+	}
+	previewDelivered, err = meter.Int64Counter(
+		MetricNameDocumentPreviewDelivered,
+		api.WithDescription(MetricDescriptionDocumentPreviewDelivered))
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentPreviewDelivered)
 	}
 
-	documentGenerated, err = meter.Int64Counter("document-generated", api.WithUnit("document"), api.WithDescription("Number of documents successfully generated"))
+	documentGenerateSuccessful, err = meter.Int64Counter(
+		MetricNameDocumentGenerateSuccessful,
+		api.WithDescription(MetricDescriptionDocumentGenerateSuccessful))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-generated'")
+		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateSuccessful)
+	}
+	documentGenerateFailed, err = meter.Int64Counter(
+		MetricNameDocumentGenerateFailed,
+		api.WithDescription(MetricDescriptionDocumentGenerateFailed))
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateFailed)
 	}
 
-	documentFailed, err = meter.Int64Counter("document-failed", api.WithUnit("document"), api.WithDescription("Number of documents that can not generated because of error"))
+	documentGenerateDuration, err = meter.Float64Histogram(
+		MetricNameDocumentGenerateDuration,
+		api.WithDescription(MetricDescriptionDocumentGenerateDuration),
+		api.WithUnit("ms"))
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-failed'")
-	}
-
-	documentDelivered, err = meter.Int64Counter("document-delivered", api.WithUnit("document"), api.WithDescription("Number of documents that was delivered fully to the client"))
-	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("Failed to initialize metric 'document-delivered'")
+		logger.Logger.Fatal().Err(err).Msgf(errorTemplate, MetricNameDocumentGenerateDuration)
 	}
 }
 
-func DocumentRequested(documentType string) {
-	documentRequested.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
+func PreviewRequested() {
+	previewRequested.Add(ctx, 1)
 }
 
-func DocumentGenerated(documentType string) {
-	documentGenerated.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
+func PreviewDelivered() {
+	previewDelivered.Add(ctx, 1)
 }
 
-func DocumentFailed(documentType string) {
-	documentFailed.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
-}
-
-func DocumentDelivered(documentType string) {
-	documentDelivered.Add(ctx, 1, api.WithAttributes(attribute.Key("document_type").String(documentType)))
+func DocumentGenerated(documentType string, duration time.Duration, err error) {
+	if err != nil {
+		documentGenerateFailed.Add(ctx, 1, api.WithAttributes(attribute.Key(MetricAttributeDocumentType).String(documentType)))
+	} else {
+		documentGenerateSuccessful.Add(ctx, 1, api.WithAttributes(attribute.Key(MetricAttributeDocumentType).String(documentType)))
+		documentGenerateDuration.Record(ctx, float64(duration.Milliseconds()), api.WithAttributes(attribute.Key(MetricAttributeDocumentType).String(documentType)))
+	}
 }
 
 func ForceFlush() {
