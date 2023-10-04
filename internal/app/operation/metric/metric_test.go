@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/sdk/metric"
 
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest"
@@ -71,17 +70,15 @@ func TestPreviewRequested(t *testing.T) {
 		},
 	}
 
-	reader, provider := mockMetric()
+	reader, provider := MockMetric()
 	defer provider.Shutdown(context.Background())
 
 	PreviewRequested()
 
-	rm := metricdata.ResourceMetrics{}
-	err := reader.Collect(context.Background(), &rm)
-	require.NoError(t, err)
-	require.Len(t, rm.ScopeMetrics, 1)
-	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
-	metricdatatest.AssertEqual(t, expectedMetric, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	actualMetrics := ActualMetrics(t, reader)
+	require.Len(t, actualMetrics.ScopeMetrics, 1)
+	require.Len(t, actualMetrics.ScopeMetrics[0].Metrics, 1)
+	metricdatatest.AssertEqual(t, expectedMetric, actualMetrics.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
 }
 
 func TestPreviewDelivered(t *testing.T) {
@@ -96,17 +93,15 @@ func TestPreviewDelivered(t *testing.T) {
 		},
 	}
 
-	reader, provider := mockMetric()
+	reader, provider := MockMetric()
 	defer provider.Shutdown(context.Background())
 
 	PreviewDelivered()
 
-	rm := metricdata.ResourceMetrics{}
-	err := reader.Collect(context.Background(), &rm)
-	require.NoError(t, err)
-	require.Len(t, rm.ScopeMetrics, 1)
-	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
-	metricdatatest.AssertEqual(t, expectedMetric, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	actualMetrics := ActualMetrics(t, reader)
+	require.Len(t, actualMetrics.ScopeMetrics, 1)
+	require.Len(t, actualMetrics.ScopeMetrics[0].Metrics, 1)
+	metricdatatest.AssertEqual(t, expectedMetric, actualMetrics.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
 }
 
 func TestPreviewRequested_DocumentGenerated_Successful(t *testing.T) {
@@ -136,18 +131,16 @@ func TestPreviewRequested_DocumentGenerated_Successful(t *testing.T) {
 		},
 	}
 
-	reader, provider := mockMetric()
+	reader, provider := MockMetric()
 	defer provider.Shutdown(context.Background())
 
 	DocumentGenerated(expectedDocumentType, duration, nil)
 
-	rm := metricdata.ResourceMetrics{}
-	err := reader.Collect(context.Background(), &rm)
-	require.NoError(t, err)
-	require.Len(t, rm.ScopeMetrics, 1)
-	require.Len(t, rm.ScopeMetrics[0].Metrics, 2)
-	metricdatatest.AssertEqual(t, expectedDocumentMetric, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
-	metricdatatest.AssertEqual(t, expectedDurationMetric, rm.ScopeMetrics[0].Metrics[1], metricdatatest.IgnoreTimestamp(), metricdatatest.IgnoreExemplars())
+	actualMetrics := ActualMetrics(t, reader)
+	require.Len(t, actualMetrics.ScopeMetrics, 1)
+	require.Len(t, actualMetrics.ScopeMetrics[0].Metrics, 2)
+	metricdatatest.AssertEqual(t, expectedDocumentMetric, actualMetrics.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	metricdatatest.AssertEqual(t, expectedDurationMetric, actualMetrics.ScopeMetrics[0].Metrics[1], metricdatatest.IgnoreTimestamp(), metricdatatest.IgnoreExemplars())
 }
 
 func TestPreviewRequested_DocumentGenerated_Failed(t *testing.T) {
@@ -166,25 +159,13 @@ func TestPreviewRequested_DocumentGenerated_Failed(t *testing.T) {
 	}
 	duration := 5280127 * time.Microsecond
 
-	reader, provider := mockMetric()
+	reader, provider := MockMetric()
 	defer provider.Shutdown(context.Background())
 
 	DocumentGenerated(expectedDocumentType, duration, errorOccurred)
 
-	rm := metricdata.ResourceMetrics{}
-	err := reader.Collect(context.Background(), &rm)
-	require.NoError(t, err)
-	require.Len(t, rm.ScopeMetrics, 1)
-	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
-	metricdatatest.AssertEqual(t, expectedDocumentMetric, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
-}
-
-func mockMetric() (*metric.ManualReader, *metric.MeterProvider) {
-	reader := metric.NewManualReader()
-
-	ressource, _ := createRessource()
-	views := createViews()
-	provider := createProvider(ressource, []metric.Reader{reader}, views)
-	createMetrics(provider)
-	return reader, provider
+	actualMetrics := ActualMetrics(t, reader)
+	require.Len(t, actualMetrics.ScopeMetrics, 1)
+	require.Len(t, actualMetrics.ScopeMetrics[0].Metrics, 1)
+	metricdatatest.AssertEqual(t, expectedDocumentMetric, actualMetrics.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
 }
