@@ -17,6 +17,7 @@ require (
 	github.com/kinneko-de/api-contract/golang/kinnekode/protobuf v0.2.6
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.42.0
+	go.opentelemetry.io/otel/sdk v1.19.0
 	google.golang.org/grpc v1.58.2
 )
 
@@ -30,7 +31,6 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
-	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13 // indirect
