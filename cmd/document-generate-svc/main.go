@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 
 	"github.com/rs/zerolog/log"
@@ -9,7 +10,8 @@ import (
 
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/document"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,20 +22,27 @@ var (
 )
 
 func main() {
-	operation.SetDefaultLoggingLevel()
+	logger.SetInfoLogLevel()
+
+	provider, err := metric.InitializeMetrics()
+	if err != nil {
+		logger.Logger.Fatal().Err(err).Msg("failed to initialize metrics")
+	}
+	defer provider.Shutdown(context.Background())
+
 	StartGrpcServer()
 }
 
-func StartGrpcServer() {
+func StartGrpcServer() *grpc.Server {
 	port := "3110"
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		operation.Logger.Fatal().Err(err).Msgf("Failed to listen on port %v", port)
+		logger.Logger.Fatal().Err(err).Msgf("Failed to listen on port %v", port)
 	}
 
 	// Handling of panic to prevent crash from example nil pointer exceptions
 	logPanic = func(p any) (err error) {
-		log.Warn().Any("method", p).Err(err).Msg("Recovered from panic.")
+		log.Error().Any("method", p).Err(err).Msg("Recovered from panic.")
 		return status.Errorf(codes.Internal, "Internal server error occured.")
 	}
 
@@ -51,8 +60,10 @@ func StartGrpcServer() {
 	)
 	RegisterAllGrpcServices(grpcServer)
 	if err := grpcServer.Serve(listener); err != nil {
-		operation.Logger.Fatal().Err(err).Msg("Failed to start grpc server.")
+		logger.Logger.Fatal().Err(err).Msg("grpc server was aborted. Graceful shutdown should be implemented.")
 	}
+
+	return grpcServer
 }
 
 func RegisterAllGrpcServices(grpcServer *grpc.Server) {

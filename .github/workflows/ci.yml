@@ -5,7 +5,9 @@ on:
       - 'documentation/**'
 
 env:
-  MAJOR_MINOR_PATCH: 0.5.2
+  MAJOR_MINOR_PATCH: 0.6.0
+  GIN_MODE: release
+  MAIN_PACKAGE: 'cmd/document-generate-svc/main.go'
 
 concurrency: ci-${{ github.ref }}
 
@@ -67,10 +69,10 @@ jobs:
           tee build/version.txt <<< ${{ steps.semantic_version.outputs.semantic_version }}
       - name: "Build"
         run: |
-          go build ./...
+          go build -o bin/app ./${{ env.MAIN_PACKAGE }}
       - name: "Test"
         run: |
-          go test ./... -race -coverprofile=coverage.out
+          go test ./... -race -coverprofile=coverage.out -timeout 5m
       - name: "Exclude codecoverage"
         run: |
           grep -v -E -f .covignore coverage.out > coverage.filtered.out
@@ -80,6 +82,13 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+      - name: "Build artifacts"
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./build/dockerfile
+          push: false
+          tags: ${{ steps.semantic_version.outputs.semantic_version }} # on push later
       - name: Create semantic versioning git tag for golang
         uses: actions/github-script@v6
         with:

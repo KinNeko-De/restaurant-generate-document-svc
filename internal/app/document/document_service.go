@@ -1,14 +1,14 @@
 package document
 
 import (
+	"context"
 	"io"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-
 	documentServiceApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
-	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,43 +21,42 @@ type DocumentServiceServer struct {
 }
 
 func (s *DocumentServiceServer) GeneratePreview(request *documentServiceApi.GeneratePreviewRequest, stream documentServiceApi.DocumentService_GeneratePreviewServer) error {
-	start := time.Now()
-
 	err := validateRequest(request)
 	if err != nil {
 		return err
 	}
 
 	requestId := uuid.New()
-	logger := operation.Logger.With().Str("requestId", requestId.String()).Logger()
+	logger := logger.Logger.With().Str("requestId", requestId.String()).Logger()
+	metric.PreviewRequested()
 
-	logger.Debug().Msgf("Preprocessing finished: %v", time.Since(start))
-	start = time.Now()
-
-	document, err := documentGenerator.GenerateDocument(requestId, request.RequestedDocument)
+	document, err := GenerateDocument(requestId, request.RequestedDocument)
 	if err != nil {
-		logger.Err(err).Msg("Generation of document failed.")
 		return status.Error(codes.Internal, "Generation of document failed.")
 	}
 	defer CloseAndLogError(document.Handler, logger)
 
-	logger.Debug().Msgf("Document generation finished: %v", time.Since(start))
-	start = time.Now()
-
 	err = sendMetadata(document, stream)
 	if err != nil {
-		logger.Err(err).Msg("Sending metadata failed.")
-		return status.Error(codes.Internal, "Sending metadata failed.")
+		return sendError(stream, err, logger, "Sending metadata failed.")
 	}
-
 	err = sendChuncks(document, stream)
 	if err != nil {
-		logger.Err(err).Msg("Sending chunk failed.")
-		return status.Error(codes.Internal, "Sending chunk failed.")
+		return sendError(stream, err, logger, "Sending chunk failed.")
 	}
 
-	logger.Debug().Msgf("Sending finished: %v", time.Since(start))
+	metric.PreviewDelivered()
 	return nil
+}
+
+func sendError(stream documentServiceApi.DocumentService_GeneratePreviewServer, err error, logger zerolog.Logger, messageTemplate string) error {
+	if stream.Context().Err() == context.Canceled {
+		logger.Debug().Msg("Stream canceled.")
+		return nil
+	}
+
+	logger.Err(err).Msg(messageTemplate)
+	return status.Error(codes.Internal, messageTemplate)
 }
 
 func validateRequest(request *documentServiceApi.GeneratePreviewRequest) error {
