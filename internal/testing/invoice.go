@@ -56,7 +56,7 @@ func GenerateTestInvoice() {
 	}
 
 	testWriter.Flush()
-	logger.Logger.Info().Msgf("%v Bytes read", strconv.Itoa(totalReadBytes))
+	logger.Logger.Info().Str("BytesRead", strconv.Itoa(totalReadBytes)).Msgf("Document generated")
 
 	if err := result.Handler.Close(); err != nil {
 		logger.Logger.Fatal().Err(err).Msg("Closing of document failed.")
