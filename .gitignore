@@ -20,6 +20,9 @@
 # Go workspace file
 go.work
 
+# test path for build ci
+bin
+
 # sut bin files
 scripts/sut/bin/**
 # sut log files
