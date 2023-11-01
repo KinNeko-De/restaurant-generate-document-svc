@@ -8,7 +8,7 @@ echo "Existing feature branches: $existingfeaturebranches"
 for tag in $(git tag --list 'v[0-9]*\.[0-9]*\.[0-9]*-*')
 do
   echo "Tag: $tag"
-  # regex to match the tag name
+  # regex to match the tag name: pattern is v1.2.3-featurename.buildnumber
   [[ $tag =~ ^v[0-9]*\.[0-9]*\.[0-9]*-(.*)\.([0-9]*)$ ]]
   featurebranchname=${BASH_REMATCH[1]}
   echo "Feature branch name: $featurebranchname"
@@ -21,4 +21,5 @@ do
     git tag -d $tag
   fi
 done
+
 read -p "Press any key to resume ..."
