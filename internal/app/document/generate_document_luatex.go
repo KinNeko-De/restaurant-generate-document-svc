@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
 	protoluaextension "github.com/kinneko-de/restaurant-document-generate-svc/internal/app/encoding/protolua"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
+	"github.com/rs/zerolog"
 
 	"github.com/kinneko-de/protobuf-go/encoding/protolua"
 	"google.golang.org/protobuf/proto"
@@ -20,48 +22,84 @@ import (
 type DocumentGeneratorLuatex struct {
 }
 
-func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (result GeneratedFile, err error) {
+func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (GeneratedFile, error) {
 	appRootDirectory := app.Config.RootPath
 	luatexTemplateDirectory := path.Join(appRootDirectory, "template")
 	runDirectory := path.Join(appRootDirectory, "run")
 	tmpDirectory := path.Join(runDirectory, requestId.String())
 	outputDirectoryRelativeToTmpDirectory := "generated"
 	outputDirectory := path.Join(tmpDirectory, outputDirectoryRelativeToTmpDirectory)
+	logger := logger.Logger.With().
+		Str("requestId", requestId.String()).
+		Str("appRootDirectory", appRootDirectory).
+		Str("luatexTemplateDirectory", luatexTemplateDirectory).
+		Str("runDirectory", runDirectory).
+		Str("tmpDirectory", tmpDirectory).
+		Str("outputDirectoryRelativeToTmpDirectory", outputDirectoryRelativeToTmpDirectory).
+		Str("outputDirectory", outputDirectory).
+		Str("documentType", documentType).
+		Logger()
 
-	CreateDirectoryForRun(outputDirectory)
+	logger.Debug().Msg("Generating document...")
+	generatedFile, err := generateDocument(logger, message, documentType, outputDirectory, luatexTemplateDirectory, tmpDirectory, outputDirectoryRelativeToTmpDirectory)
+	if err != nil {
+		logger.Error().Err(err).Msg("generating document failed")
+		return GeneratedFile{}, err
+	}
+
+	logger.Debug().
+		Str("fileSize", fmt.Sprintf("%v", generatedFile.Size)).
+		Msgf("Document generated")
+	return generatedFile, nil
+}
+
+func generateDocument(logger zerolog.Logger, message protoreflect.ProtoMessage, documentType string, outputDirectory string, luatexTemplateDirectory string, tmpDirectory string, outputDirectoryRelativeToTmpDirectory string) (GeneratedFile, error) {
+	err := CreateDirectoryForRun(outputDirectory)
+	if err != nil {
+		return GeneratedFile{}, err
+	}
+	logger.Trace().Msg("Directory for run created")
 
 	documentInputData, err := convertToLuaTable(message)
 	if err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("Input data converted to lua table")
 
 	templateFile, err := copyLuatexTemplate(luatexTemplateDirectory, documentType, tmpDirectory)
 	if err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("Template copied")
 
 	if err := createDocumentInputData(documentType, tmpDirectory, documentInputData); err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("Input data created")
 
+	// Latex has to be executed twice because of the table of contents, page numbers, etc.
+	// TODO: make this configurable over the template to save some time
 	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
 	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("LuaLatex executed")
 
-	generatedDocumentFile, reader, err := createAccessToOutputfile(outputDirectory, documentType)
+	generatedDocumentFile, reader, err := readGeneratedDocument(outputDirectory, documentType)
 	if err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("generated document read")
 
 	fileInfo, err := generatedDocumentFile.Stat()
 	if err != nil {
-		return result, err
+		return GeneratedFile{}, err
 	}
+	logger.Trace().Msg("generated document stat read")
 
-	return GeneratedFile{
+	generatedFile := GeneratedFile{
 		Reader: reader,
 		Size:   fileInfo.Size(),
 		Handler: GeneratedFileHandler{
@@ -69,17 +107,18 @@ func (DocumentGeneratorLuatex) GenerateDocument(requestId uuid.UUID, documentTyp
 			tmpDirectory: tmpDirectory,
 		},
 		DocumentType: documentType,
-	}, nil
+	}
+	return generatedFile, nil
 }
 
-func createAccessToOutputfile(outputDirectory string, documentType string) (*os.File, *bufio.Reader, error) {
+func readGeneratedDocument(outputDirectory string, documentType string) (*os.File, *bufio.Reader, error) {
 	generatedDocument := path.Join(outputDirectory, documentType+".pdf")
-	generatedDocumentFile, err := os.Open(generatedDocument)
+	generatedFile, err := os.Open(generatedDocument)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error open generated document %v: %v", generatedDocument, err)
 	}
-	reader := bufio.NewReader(generatedDocumentFile)
-	return generatedDocumentFile, reader, nil
+	reader := bufio.NewReader(generatedFile)
+	return generatedFile, reader, nil
 }
 
 func executeLuaLatex(outputDirectory string, templateFile string, tmpDirectory string) error {
