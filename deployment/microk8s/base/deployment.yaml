@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-generate-svc
+  namespace: restaurant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: document-generate-svc
+  template:
+    metadata:
+      labels:
+        app: document-generate-svc
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: app
+        image: localhost:32000/restaurant-document-generate-svc:latest
+        envFrom:
+        - configMapRef:
+            name: document-generate-svc-environment
+        ports:
+        - containerPort: 3110
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
