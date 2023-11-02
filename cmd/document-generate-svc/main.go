@@ -22,10 +22,11 @@ func main() {
 
 	provider, err := metric.InitializeMetrics()
 	if err != nil {
-		logger.Logger.Fatal().Err(err).Msg("failed to initialize metrics")
+		logger.Logger.Error().Err(err).Msg("failed to initialize metrics")
+		os.Exit(40)
 	}
 	grpcServerStop := make(chan struct{})
-	server.StartGrpcServer(grpcServerStop, "3110")
+	go server.StartGrpcServer(grpcServerStop, "3110")
 
 	<-grpcServerStop
 	provider.Shutdown(context.Background())
