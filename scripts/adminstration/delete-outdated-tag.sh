@@ -22,4 +22,4 @@ do
   fi
 done
 
-read -p "Press any key to resume ..."
+read -p "Press any key to end."
