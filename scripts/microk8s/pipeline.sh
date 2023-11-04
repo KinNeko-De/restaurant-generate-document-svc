@@ -9,4 +9,4 @@ sudo docker push localhost:32000/restaurant-document-generate-svc:latest
 
 kubectl apply --kustomize ./deployment/microk8s/overlays/dev
 
-# kubectl logs -l app=document-generate-svc -n restaurant
+# kubectl logs -l app=document-generate-svc -tail 10 -n restaurant

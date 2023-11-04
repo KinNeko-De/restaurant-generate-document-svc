@@ -25,8 +25,22 @@ spec:
         - containerPort: 3110
         resources:
           limits:
-            cpu: "200m"
-            memory: "200Mi"
+            cpu: "1000m"
+            memory: "1000Mi"
           requests:
-            cpu: "100m"
-            memory: "100Mi"
+            cpu: "1000m"
+            memory: "1000Mi"
+        volumeMounts:
+        - name: run-app-dir
+          mountPath: /app/run
+        - name: template-app-dir
+          mountPath: /app/template
+      volumes:
+      - name: run-app-dir
+        emptyDir:
+          sizeLimit: 20Mi
+          medium: Memory
+      - name: template-app-dir
+        hostPath:
+          path: /tmp/template # copy the invoice.tex into this directory, mount will be removed later
+
