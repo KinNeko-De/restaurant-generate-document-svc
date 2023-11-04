@@ -11,6 +11,7 @@
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/document-generate-svc/main.go",
             "showLog": true,
+            "console": "integratedTerminal",
             "env": {
               "APP_ROOT_PATH" : "../../scripts/sut",
               "OTEL_SERVICE_NAME": "restaurant.document-generate-svc",

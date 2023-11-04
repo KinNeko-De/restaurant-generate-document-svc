@@ -13,14 +13,14 @@ import (
 )
 
 type DocumentGenerator interface {
-	GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (result GeneratedFile, err error)
+	GenerateDocument(requestId uuid.UUID, documentType string, message proto.Message) (GeneratedFile, error)
 }
 
 var (
 	documentGenerator DocumentGenerator = DocumentGeneratorLuatex{}
 )
 
-func GenerateDocument(requestId uuid.UUID, requestedDocument *restaurantDocumentApi.RequestedDocument) (result GeneratedFile, err error) {
+func GenerateDocument(requestId uuid.UUID, requestedDocument *restaurantDocumentApi.RequestedDocument) (GeneratedFile, error) {
 	documentType, message := parseRequest(requestedDocument)
 
 	start := time.Now()
