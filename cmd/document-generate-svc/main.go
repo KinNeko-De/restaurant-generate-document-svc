@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	logger.SetLogLevel(zerolog.DebugLevel)
+	logger.SetLogLevel(zerolog.WarnLevel)
 	logger.Logger.Info().Msg("Starting application.")
 
 	provider, err := metric.InitializeMetrics()
