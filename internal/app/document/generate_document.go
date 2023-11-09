@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	restaurantDocumentApi "github.com/kinneko-de/api-contract/golang/kinnekode/restaurant/document/v1"
+	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
 	"google.golang.org/protobuf/proto"
 )
@@ -22,10 +23,19 @@ var (
 
 func GenerateDocument(requestId uuid.UUID, requestedDocument *restaurantDocumentApi.RequestedDocument) (GeneratedFile, error) {
 	documentType, message := parseRequest(requestedDocument)
+	logger := logger.Logger.With().
+		Str("requestId", requestId.String()).
+		Str("documentType", documentType).
+		Logger()
 
 	start := time.Now()
 	generatedFile, err := documentGenerator.GenerateDocument(requestId, documentType, message)
 	metric.DocumentGenerated(documentType, time.Since(start), err)
+	if err != nil {
+		logger.Error().Err(err).Msg("generating document failed")
+	} else {
+		logger.Info().Dur("duration", time.Since(start)).Msg("document generated successfully")
+	}
 
 	return generatedFile, err
 }

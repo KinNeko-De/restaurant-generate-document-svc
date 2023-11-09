@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app"
@@ -58,34 +59,29 @@ func generateDocument(logger zerolog.Logger, message protoreflect.ProtoMessage, 
 	if err != nil {
 		return GeneratedFile{}, err
 	}
-	logger.Trace().Msg("Directory for run created")
+	logger.Trace().Msg("directory for run created")
 
 	documentInputData, err := convertToLuaTable(message)
 	if err != nil {
 		return GeneratedFile{}, err
 	}
-	logger.Trace().Msg("Input data converted to lua table")
+	logger.Trace().Msg("input data converted to lua table")
 
 	templateFile, err := copyLuatexTemplate(luatexTemplateDirectory, documentType, tmpDirectory)
 	if err != nil {
 		return GeneratedFile{}, err
 	}
-	logger.Trace().Msg("Template copied")
+	logger.Trace().Msg("template copied")
 
 	if err := createDocumentInputData(documentType, tmpDirectory, documentInputData); err != nil {
 		return GeneratedFile{}, err
 	}
-	logger.Trace().Msg("Input data created")
+	logger.Trace().Msg("input data created")
 
-	// Latex has to be executed twice because of the table of contents, page numbers, etc.
-	// TODO: make this configurable over the template to save some time
-	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
-		return GeneratedFile{}, err
+	execErr := createDocument(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory, logger)
+	if execErr != nil {
+		return GeneratedFile{}, nil
 	}
-	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
-		return GeneratedFile{}, err
-	}
-	logger.Trace().Msg("LuaLatex executed")
 
 	generatedDocumentFile, reader, err := readGeneratedDocument(outputDirectory, documentType)
 	if err != nil {
@@ -109,6 +105,22 @@ func generateDocument(logger zerolog.Logger, message protoreflect.ProtoMessage, 
 		DocumentType: documentType,
 	}
 	return generatedFile, nil
+}
+
+func createDocument(outputDirectoryRelativeToTmpDirectory string, templateFile string, tmpDirectory string, logger zerolog.Logger) error {
+	startLatex := time.Now()
+
+	// Latex has to be executed twice because of the table of contents, page numbers, etc.
+	// TODO: make this configurable over the template to save some time
+	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
+		return err
+	}
+	if err := executeLuaLatex(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory); err != nil {
+		return err
+	}
+	logger.Trace().Dur("duration", time.Since(startLatex)).Msg("luaLatex executed")
+
+	return nil
 }
 
 func readGeneratedDocument(outputDirectory string, documentType string) (*os.File, *bufio.Reader, error) {
