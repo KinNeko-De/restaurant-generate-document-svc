@@ -72,8 +72,8 @@ func startGrpcServer(grpcServerStop chan struct{}, grpcServerStarted chan struct
 	close(grpcServerStarted)
 
 	stop := <-gracefulStop
-	grpcServer.GracefulStop()
 	healthServer.Shutdown()
+	grpcServer.GracefulStop()
 	logger.Logger.Debug().Msgf("http server stopped. received signal %s", stop)
 	close(grpcServerStop)
 }
