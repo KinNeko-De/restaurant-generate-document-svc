@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-generate-svc-crash
+  namespace: restaurant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: document-generate-svc-crash
+  template:
+    metadata:
+      labels:
+        app: document-generate-svc-crash
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: app
+        image: localhost:32000/restaurant-document-generate-svc:latest
+        envFrom:
+        - configMapRef:
+            name: document-generate-svc-environment-crash
+        ports:
+        - containerPort: 3110
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1000Mi"
+          requests:
+            cpu: "1000m"
+            memory: "1000Mi"
+        startupProbe:
+          grpc:
+            port: 3110
+            service: liveness
+          initialDelaySeconds: 1
+          periodSeconds: 2
+          timeoutSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          grpc:
+            port: 3110
+            service: liveness
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 5
+        readinessProbe:
+          grpc:
+            port: 3110
+            service: readiness
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 5
+          successThreshold: 2
+        volumeMounts:
+        - name: run-app-dir
+          mountPath: /app/run
+        - name: template-app-dir
+          mountPath: /app/template
+      volumes:
+      - name: run-app-dir
+        emptyDir:
+          sizeLimit: 20Mi
+          medium: Memory
+      - name: template-app-dir
+        hostPath:
+          path: /tmp/template # copy the invoice.tex into this directory, mount will be removed later
+
