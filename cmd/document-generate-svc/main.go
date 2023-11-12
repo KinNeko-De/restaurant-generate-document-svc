@@ -34,21 +34,21 @@ func main() {
 		logger.Logger.Error().Err(err).Msg("failed to initialize metrics")
 		os.Exit(40)
 	}
-	grpcServerStop := make(chan struct{})
+	grpcServerStopped := make(chan struct{})
 	grpcServerStarted := make(chan struct{})
-	go startGrpcServer(grpcServerStop, grpcServerStarted, "3110")
+	go startGrpcServer(grpcServerStopped, grpcServerStarted, ":3110")
 
 	<-grpcServerStarted
 	health.Ready()
 
-	<-grpcServerStop
+	<-grpcServerStopped
 	provider.Shutdown(context.Background())
 	logger.Logger.Info().Msg("Application stopped.")
 	os.Exit(0)
 }
 
-func startGrpcServer(grpcServerStop chan struct{}, grpcServerStarted chan struct{}, port string) {
-	listener, err := net.Listen("tcp", ":"+port)
+func startGrpcServer(grpcServerStopped chan struct{}, grpcServerStarted chan struct{}, port string) {
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msgf("Failed to listen on port %v", port)
 		os.Exit(50)
@@ -75,7 +75,7 @@ func startGrpcServer(grpcServerStop chan struct{}, grpcServerStarted chan struct
 	healthServer.Shutdown()
 	grpcServer.GracefulStop()
 	logger.Logger.Debug().Msgf("http server stopped. received signal %s", stop)
-	close(grpcServerStop)
+	close(grpcServerStopped)
 }
 
 func configureGrpcServer() *grpc.Server {
