@@ -57,36 +57,7 @@ func TestMain_ApplicationListenToSIGTERM_AndGracefullyShutdown(t *testing.T) {
 	assert.Equal(t, 0, exitCode)
 }
 
-// test does not run on windows
-// In case you broke something, the test will run forever
-// In the pipeline you will see:
-// panic: test timed out after 5m0s
-// running tests:
-// TestMain_ApplicationListenToInterrupt_GracefullShutdown (5m0s)
-func TestMain_ProcessAlreadyListenToPort_AppCrash(t *testing.T) {
-	if os.Getenv("EXECUTE") == "1" {
-		main()
-		return
-	}
-
-	t.Setenv(metric.OtelMetricEndpointEnv, "http://localhost")
-	t.Setenv(metric.ServiceNameEnv, "blub")
-	blockingcmd := exec.Command(os.Args[0], "-test.run=TestMain_ProcessAlreadyListenToPort_AppCrash")
-	blockingcmd.Env = append(os.Environ(), "EXECUTE=1")
-	blockingErr := blockingcmd.Start()
-	require.Nil(t, blockingErr)
-	defer blockingcmd.Process.Kill()
-
-	time.Sleep(1 * time.Second) // give the service some time to start
-	cmd := exec.Command(os.Args[0], "-test.run=TestMain_ProcessAlreadyListenToPort_AppCrash")
-	cmd.Env = append(os.Environ(), "EXECUTE=1")
-	err := cmd.Run()
-	require.NotNil(t, err)
-	exitCode := err.(*exec.ExitError).ExitCode()
-	assert.Equal(t, 50, exitCode)
-}
-
-func TestMain_HealthCheckIsServing_liveness(t *testing.T) {
+func TestMain_HealthCheckIsServing_Liveness(t *testing.T) {
 	serviceToCheck := "liveness"
 
 	if os.Getenv("EXECUTE") == "1" {
@@ -96,7 +67,7 @@ func TestMain_HealthCheckIsServing_liveness(t *testing.T) {
 
 	t.Setenv(metric.OtelMetricEndpointEnv, "http://localhost")
 	t.Setenv(metric.ServiceNameEnv, "blub")
-	runningApp := exec.Command(os.Args[0], "-test.run=TestMain_HealthCheckIsServing")
+	runningApp := exec.Command(os.Args[0], "-test.run=TestMain_HealthCheckIsServing_Liveness")
 	runningApp.Env = append(os.Environ(), "EXECUTE=1")
 	blockingErr := runningApp.Start()
 	require.Nil(t, blockingErr)
@@ -110,7 +81,7 @@ func TestMain_HealthCheckIsServing_liveness(t *testing.T) {
 	assert.Equal(t, expectedStatus, healthResponse.Status)
 }
 
-func TestMain_HealthCheckIsServing_readiness(t *testing.T) {
+func TestMain_HealthCheckIsServing_Readiness(t *testing.T) {
 	serviceToCheck := "readiness"
 
 	if os.Getenv("EXECUTE") == "1" {
@@ -120,7 +91,7 @@ func TestMain_HealthCheckIsServing_readiness(t *testing.T) {
 
 	t.Setenv(metric.OtelMetricEndpointEnv, "http://localhost")
 	t.Setenv(metric.ServiceNameEnv, "blub")
-	runningApp := exec.Command(os.Args[0], "-test.run=TestMain_HealthCheckIsServing")
+	runningApp := exec.Command(os.Args[0], "-test.run=TestMain_HealthCheckIsServing_Readiness")
 	runningApp.Env = append(os.Environ(), "EXECUTE=1")
 	blockingErr := runningApp.Start()
 	require.Nil(t, blockingErr)

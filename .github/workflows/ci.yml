@@ -5,7 +5,7 @@ on:
       - 'documentation/**'
 
 env:
-  MAJOR_MINOR_PATCH: 0.8.0
+  MAJOR_MINOR_PATCH: 0.8.1
   GIN_MODE: release
   MAIN_PACKAGE: 'cmd/document-generate-svc/main.go'
 
@@ -72,7 +72,7 @@ jobs:
           go build -o bin/app ./${{ env.MAIN_PACKAGE }}
       - name: "Test"
         run: |
-          go test ./... -race -coverprofile=coverage.out -timeout 5m
+          go test ./... -race -coverpkg=all -coverprofile=coverage.out -timeout 5m
       - name: "Exclude codecoverage"
         run: |
           grep -v -E -f .covignore coverage.out > coverage.filtered.out
