@@ -4,8 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/rs/zerolog"
-
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/health"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/logger"
 	"github.com/kinneko-de/restaurant-document-generate-svc/internal/app/operation/metric"
@@ -13,7 +11,7 @@ import (
 )
 
 func main() {
-	logger.SetLogLevel(zerolog.WarnLevel)
+	logger.SetLogLevel(logger.LogLevel)
 	logger.Logger.Info().Msg("Starting application.")
 
 	provider, err := metric.InitializeMetrics()
