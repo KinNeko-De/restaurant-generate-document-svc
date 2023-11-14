@@ -32,3 +32,17 @@ func TestStartGrpcServer_ProcessAlreadyListenToPort_AppCrash(t *testing.T) {
 	exitCode := err.(*exec.ExitError).ExitCode()
 	assert.Equal(t, 50, exitCode)
 }
+
+func TestStartGrpcServer_PortMalformed(t *testing.T) {
+	if os.Getenv("EXECUTE") == "1" {
+		StartGrpcServer(make(chan struct{}), make(chan struct{}), "malformedPort")
+		return
+	}
+
+	runningApp := exec.Command(os.Args[0], "-test.run=TestStartGrpcServer_PortMalformed")
+	runningApp.Env = append(os.Environ(), "EXECUTE=1")
+	err := runningApp.Run()
+	require.NotNil(t, err)
+	exitCode := err.(*exec.ExitError).ExitCode()
+	assert.Equal(t, 51, exitCode)
+}
