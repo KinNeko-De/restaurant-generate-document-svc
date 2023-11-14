@@ -30,7 +30,7 @@ func TestStartGrpcServer_ProcessAlreadyListenToPort_AppCrash(t *testing.T) {
 	err := cmd.Run()
 	require.NotNil(t, err)
 	exitCode := err.(*exec.ExitError).ExitCode()
-	assert.Equal(t, 50, exitCode)
+	assert.Equal(t, 51, exitCode)
 }
 
 func TestStartGrpcServer_PortMalformed(t *testing.T) {
