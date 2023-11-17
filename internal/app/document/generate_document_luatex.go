@@ -78,9 +78,8 @@ func generateDocument(logger zerolog.Logger, message protoreflect.ProtoMessage, 
 	}
 	logger.Trace().Msg("input data created")
 
-	execErr := createDocument(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory, logger)
-	if execErr != nil {
-		return GeneratedFile{}, nil
+	if err := createDocument(outputDirectoryRelativeToTmpDirectory, templateFile, tmpDirectory, logger); err != nil {
+		return GeneratedFile{}, err
 	}
 
 	generatedDocumentFile, reader, err := readGeneratedDocument(outputDirectory, documentType)
