@@ -9,7 +9,7 @@ require github.com/kinneko-de/protobuf-go v0.2.0
 require (
 	github.com/google/uuid v1.3.1
 	github.com/kinneko-de/api-contract/golang/kinnekode/restaurant v0.0.1
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
